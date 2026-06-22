@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: #0A0F1E;
+    color: #F8FAFC;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  /* ── Brand Button Variants ── */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-brand-blue text-white font-medium text-sm 
+           transition-all duration-200 hover:bg-brand-blue-dark hover:-translate-y-0.5 active:scale-95 cursor-pointer;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/10 text-white font-medium text-sm 
+           transition-all duration-200 hover:border-white/25 hover:bg-white/5 active:scale-95 cursor-pointer;
+  }
+
+  .btn-lg {
+    @apply px-7 py-3.5 text-base rounded-xl;
+  }
+
+  /* ── Input Fields ── */
+  .input-field {
+    @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500
+           text-sm focus:outline-none focus:border-brand-blue/60 focus:bg-white/[0.08] transition-all duration-200;
+  }
+
+  .input-label {
+    @apply block text-sm font-medium text-slate-300 mb-1.5;
+  }
+
+  /* ── Cards ── */
+  .glass-card {
+    @apply bg-white/[0.04] border border-white/[0.08] rounded-2xl;
+  }
+
+  /* ── Section titles ── */
+  .section-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-widest text-brand-cyan mb-3;
+  }
+
+  .section-heading {
+    @apply font-display text-3xl md:text-4xl font-bold tracking-tight leading-tight;
+  }
+}
+
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, #3B82F6, #06B6D4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Wallet card glow */
+.wallet-glow {
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 130, 246, 0.15), 0 0 60px rgba(59, 130, 246, 0.1);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0A0F1E; }
+::-webkit-scrollbar-thumb { background: #1E2A45; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3B82F6; }
