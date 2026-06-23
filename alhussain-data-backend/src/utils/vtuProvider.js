@@ -10,71 +10,33 @@ const vtuClient = axios.create({
   },
 })
 
-/**
- * NOTE: Endpoint paths/payloads below follow a generic VTU-provider shape
- * (this mirrors common providers like VTpass/Clubkonnect). Adjust field
- * names to match whichever provider you contract with — the rest of the
- * codebase only depends on the function signatures below, not the provider.
- */
+const NETWORK_MAP = { MTN:'mtn', AIRTEL:'airtel', GLO:'glo', '9MOBILE':'etisalat' }
+const TV_MAP = { dstv:'dstv', gotv:'gotv', startimes:'startimes' }
+const DISCO_MAP = { aedc:'abuja-electric', ekedc:'eko-electric', ibedc:'ibadan-electric', ikedc:'ikeja-electric', phedc:'portharcourt-electric', eedc:'enugu-electric', kaedco:'kaduna-electric', kedc:'kano-electric' }
 
 export const vtuProvider = {
   async buyData({ network, planId, phone, providerPlanId }) {
-    const res = await vtuClient.post('/pay', {
-      serviceID: network.toLowerCase(),
-      variation_code: providerPlanId || planId,
-      phone,
-      request_id: `AHD${Date.now()}`,
-    })
+    const res = await vtuClient.post('/pay', { request_id:`AHD${Date.now()}`, serviceID:NETWORK_MAP[network.toUpperCase()]+'-data', billersCode:phone, variation_code:providerPlanId||planId, amount:'', phone })
     return res.data
   },
-
   async buyAirtime({ network, phone, amount }) {
-    const res = await vtuClient.post('/pay', {
-      serviceID: network.toLowerCase(),
-      amount,
-      phone,
-      request_id: `AHD${Date.now()}`,
-    })
+    const res = await vtuClient.post('/pay', { request_id:`AHD${Date.now()}`, serviceID:NETWORK_MAP[network.toUpperCase()], amount, phone })
     return res.data
   },
-
   async verifyMeter({ disco, meterType, meterNumber }) {
-    const res = await vtuClient.post('/merchant-verify', {
-      billersCode: meterNumber,
-      serviceID: disco,
-      type: meterType,
-    })
-    return res.data // expected: { name, address, ... }
+    const res = await vtuClient.post('/merchant-verify', { billersCode:meterNumber, serviceID:DISCO_MAP[disco.toLowerCase()]+(meterType==='prepaid'?'-prepaid':'-postpaid') })
+    return res.data
   },
-
-  async payElectricity({ disco, meterType, meterNumber, amount, customerName }) {
-    const res = await vtuClient.post('/pay', {
-      serviceID: disco,
-      billersCode: meterNumber,
-      variation_code: meterType,
-      amount,
-      phone: customerName,
-      request_id: `AHD${Date.now()}`,
-    })
-    return res.data // expected to include { token } for prepaid
+  async payElectricity({ disco, meterType, meterNumber, amount }) {
+    const res = await vtuClient.post('/pay', { request_id:`AHD${Date.now()}`, serviceID:DISCO_MAP[disco.toLowerCase()]+(meterType==='prepaid'?'-prepaid':'-postpaid'), billersCode:meterNumber, variation_code:meterType, amount, phone:meterNumber })
+    return res.data
   },
-
   async verifyDecoder({ provider, smartcard }) {
-    const res = await vtuClient.post('/merchant-verify', {
-      billersCode: smartcard,
-      serviceID: provider,
-    })
-    return res.data // expected: { name, package, ... }
+    const res = await vtuClient.post('/merchant-verify', { billersCode:smartcard, serviceID:TV_MAP[provider.toLowerCase()] })
+    return res.data
   },
-
   async payTV({ provider, smartcard, providerPlanId, amount }) {
-    const res = await vtuClient.post('/pay', {
-      serviceID: provider,
-      billersCode: smartcard,
-      variation_code: providerPlanId,
-      amount,
-      request_id: `AHD${Date.now()}`,
-    })
+    const res = await vtuClient.post('/pay', { request_id:`AHD${Date.now()}`, serviceID:TV_MAP[provider.toLowerCase()], billersCode:smartcard, variation_code:providerPlanId, amount, phone:smartcard })
     return res.data
   },
 }
