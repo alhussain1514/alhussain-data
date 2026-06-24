@@ -1,2 +1,4 @@
 alhussain-data-backend/.env
 alhussain-data-backend/.env.example
+.vercel
+.env*
