@@ -13,8 +13,10 @@ const NETWORK_MAP = { MTN: 1, AIRTEL: 3, GLO: 2, '9MOBILE': 4 }
 
 export const vtuProvider = {
   async buyData({ network, planId, phone, providerPlanId }) {
+    // providerPlanId is the real Bigi Sub numeric plan ID
+    const bigiPlanId = parseInt(providerPlanId || planId)
     const res = await vtuClient.post('/api/v2/vtu/data/purchase/', {
-      plan: providerPlanId || planId,
+      plan: bigiPlanId,
       phone_number: phone,
       pin: process.env.VTU_PIN,
     })
@@ -38,7 +40,10 @@ export const vtuProvider = {
       meter_number: meterNumber,
       meter_type: meterType,
     })
-    return { name: res.data.data?.Customer_name, address: res.data.data?.address }
+    return {
+      name: res.data.data?.Customer_name,
+      address: res.data.data?.address,
+    }
   },
 
   async payElectricity({ disco, meterType, meterNumber, amount }) {
@@ -56,7 +61,10 @@ export const vtuProvider = {
       Customer_name: customerName,
       pin: process.env.VTU_PIN,
     })
-    return { token: res.data.data?.token, units: res.data.data?.units }
+    return {
+      token: res.data.data?.token,
+      units: res.data.data?.units,
+    }
   },
 
   async verifyDecoder({ provider, smartcard }) {
@@ -64,7 +72,10 @@ export const vtuProvider = {
       cable_name: provider,
       smartcard_number: smartcard,
     })
-    return { name: res.data.data?.Customer_name, package: res.data.data?.current_bouquet }
+    return {
+      name: res.data.data?.Customer_name,
+      package: res.data.data?.current_bouquet,
+    }
   },
 
   async payTV({ provider, smartcard, providerPlanId, amount }) {
