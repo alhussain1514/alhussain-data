@@ -118,8 +118,8 @@ export const verifyMeter = async (req, res, next) => {
 // POST /api/vtu/electricity/pay
 export const payElectricity = async (req, res, next) => {
   try {
-    const { disco, meterType, meterNumber, amount, customerName } = req.body
-    if (!disco || !meterType || !meterNumber || !amount) {
+    const { disco, meterType, meterNumber, amount, customerName, customerPhone, customerAddress } = req.body
+    if (!disco || !meterType || !meterNumber || !amount || !customerName || !customerPhone || !customerAddress) {
       return res.status(400).json({ message: 'All fields are required.' })
     }
     if (amount < 500) return res.status(400).json({ message: 'Minimum payment is ₦500.' })
@@ -133,7 +133,7 @@ export const payElectricity = async (req, res, next) => {
     })
 
     try {
-      const providerRes = await vtuProvider.payElectricity({ disco, meterType, meterNumber, amount, customerName })
+      const providerRes = await vtuProvider.payElectricity({ disco, meterType, meterNumber, amount, customerName, customerPhone, customerAddress })
       await resolveTransaction({ transactionId: transaction._id, status: 'success', providerResponse: providerRes })
       res.json({
         message: 'Payment successful!',
