@@ -11,16 +11,15 @@ function sellingPrice(cost) {
   return Math.ceil(raw / 10) * 10
 }
 
-// Source: SundayNetwork support, confirmed via WhatsApp June 29 2026.
-// Using cheapest available validity per size (1 week for MTN, 7 days for
-// GLO where available; GLO 500MB and 10GB only come in 30-day).
-// AIRTEL and 9MOBILE still excluded — not confirmed working yet.
+// 500MB (1 Week, id 158) removed - confirmed unavailable on SundayNetwork.
+// Added 3GB and 5GB "1 Month" options (ids 8, 5) alongside existing 1 Week ones.
 const RAW_PLANS = [
-  ['MTN', 158, '500MB', '1 Week', 350],
   ['MTN', 6, '1GB', '1 Week', 450],
   ['MTN', 10, '2GB', '1 Week', 750],
   ['MTN', 162, '3GB', '1 Week', 1000],
+  ['MTN', 8, '3GB', '1 Month', 1100],
   ['MTN', 161, '5GB', '1 Week', 1350],
+  ['MTN', 5, '5GB', '1 Month', 1400],
 
   ['GLO', 61, '500MB', '30 Days', 300],
   ['GLO', 63, '1GB', '7 Days', 400],
@@ -46,7 +45,7 @@ const run = async () => {
   if (!pricing) pricing = new Pricing({ dataPlans: [], tvPlans: [] })
   pricing.dataPlans = dataPlans
   await pricing.save()
-  console.log(`Loaded ${dataPlans.length} confirmed-working data plans (cheapest validity, MTN + GLO)`)
+  console.log(`Loaded ${dataPlans.length} plans`)
   dataPlans.forEach((p) => console.log(`${p.network} ${p.name} (${p.duration}) - cost N${p.costPrice}, sell N${p.sellingPrice}`))
   await mongoose.disconnect()
   process.exit(0)
