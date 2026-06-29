@@ -78,3 +78,15 @@
 ::-webkit-scrollbar-track { background: #0A0F1E; }
 ::-webkit-scrollbar-thumb { background: #1E2A45; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #3B82F6; }
+
+/* Receipt print styles — isolates #receipt-print-area when printing/saving as PDF */
+@media print {
+  body * { visibility: hidden; }
+  #receipt-print-area, #receipt-print-area * { visibility: visible; }
+  #receipt-print-area {
+    position: absolute; top: 0; left: 0; width: 100%;
+    padding: 24px; background: white !important; color: black !important;
+  }
+  #receipt-print-area * { color: black !important; }
+  .no-print { display: none !important; }
+}

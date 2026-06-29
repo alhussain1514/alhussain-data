@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Wifi, Phone, ArrowRight } from 'lucide-react'
+import { Wifi, Phone, ArrowRight, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { vtuAPI } from '../utils/api'
 import { NETWORK_LIST, NETWORKS, formatNaira } from '../utils/helpers'
@@ -7,33 +7,11 @@ import { useAuth } from '../context/AuthContext'
 
 const DEMO_PLANS = {
   MTN: [
-    { id: 'mtn-1', name: '500MB', duration: '1 Day', price: 150 },
-    { id: 'mtn-2', name: '1GB', duration: '1 Day', price: 250 },
-    { id: 'mtn-3', name: '2GB', duration: '30 Days', price: 850 },
-    { id: 'mtn-4', name: '5GB', duration: '30 Days', price: 1500 },
-    { id: 'mtn-5', name: '10GB', duration: '30 Days', price: 2500 },
-    { id: 'mtn-6', name: '20GB', duration: '30 Days', price: 4500 },
-  ],
-  AIRTEL: [
-    { id: 'air-1', name: '500MB', duration: '1 Day', price: 140 },
-    { id: 'air-2', name: '1GB', duration: '7 Days', price: 300 },
-    { id: 'air-3', name: '2GB', duration: '30 Days', price: 800 },
-    { id: 'air-4', name: '5GB', duration: '30 Days', price: 1400 },
-    { id: 'air-5', name: '10GB', duration: '30 Days', price: 2400 },
-    { id: 'air-6', name: '25GB', duration: '30 Days', price: 5000 },
+    { id: 'mtn-1', name: '1GB', duration: '1 Week', price: 490 },
+    { id: 'mtn-2', name: '2GB', duration: '1 Week', price: 810 },
   ],
   GLO: [
-    { id: 'glo-1', name: '1GB', duration: '1 Day', price: 200 },
-    { id: 'glo-2', name: '2.5GB', duration: '30 Days', price: 700 },
-    { id: 'glo-3', name: '5GB', duration: '30 Days', price: 1200 },
-    { id: 'glo-4', name: '10GB', duration: '30 Days', price: 2000 },
-    { id: 'glo-5', name: '15GB', duration: '30 Days', price: 3000 },
-  ],
-  '9MOBILE': [
-    { id: '9m-1', name: '500MB', duration: '30 Days', price: 200 },
-    { id: '9m-2', name: '1.5GB', duration: '30 Days', price: 500 },
-    { id: '9m-3', name: '3GB', duration: '30 Days', price: 1000 },
-    { id: '9m-4', name: '6GB', duration: '30 Days', price: 2000 },
+    { id: 'glo-1', name: '500MB', duration: '30 Days', price: 330 },
   ],
 }
 
@@ -88,35 +66,58 @@ export default function BuyData() {
   }
 
   if (success) {
+    const reference = success.reference || 'AHD-' + Date.now()
+    const dateStr = new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })
+
     return (
-      <div className="max-w-md mx-auto text-center py-12">
-        <div className="w-20 h-20 rounded-full bg-emerald-400/10 flex items-center justify-center mx-auto mb-6">
-          <span className="text-3xl">✅</span>
+      <div className="max-w-md mx-auto py-8">
+        <div className="text-center mb-6 no-print">
+          <div className="w-20 h-20 rounded-full bg-emerald-400/10 flex items-center justify-center mx-auto mb-6">
+            <span className="text-3xl">✅</span>
+          </div>
+          <h2 className="font-display text-2xl font-bold mb-2">Data Purchased!</h2>
+          <p className="text-slate-400">
+            {selectedPlan.name} has been sent to <span className="text-white">{phone}</span>
+          </p>
         </div>
-        <h2 className="font-display text-2xl font-bold mb-2">Data Purchased!</h2>
-        <p className="text-slate-400 mb-6">
-          {selectedPlan.name} has been sent to <span className="text-white">{phone}</span>
-        </p>
-        <div className="glass-card p-5 text-left mb-6 space-y-3">
-          {[
-            ['Network', selectedNetwork],
-            ['Plan', selectedPlan.name],
-            ['Duration', selectedPlan.duration],
-            ['Phone', phone],
-            ['Amount', formatNaira(selectedPlan.price)],
-            ['Status', '✓ Success'],
-            ['Reference', success.reference || 'AHD-' + Date.now()],
-          ].map(([k, v]) => (
-            <div key={k} className="flex justify-between text-sm">
-              <span className="text-slate-400">{k}</span>
-              <span className="text-white font-medium">{v}</span>
-            </div>
-          ))}
+
+        <div id="receipt-print-area" className="glass-card p-6 text-left mb-6">
+          <div className="text-center mb-5 pb-4 border-b border-white/10">
+            <p className="font-display font-bold text-lg">AL-HUSSAIN <span className="text-brand-cyan">DATA</span></p>
+            <p className="text-xs text-slate-400 mt-1">Payment Receipt</p>
+          </div>
+          <div className="space-y-3">
+            {[
+              ['Status', '✓ Successful'],
+              ['Reference', reference],
+              ['Date', dateStr],
+              ['Network', selectedNetwork],
+              ['Plan', selectedPlan.name],
+              ['Duration', selectedPlan.duration],
+              ['Phone Number', phone],
+              ['Amount Paid', formatNaira(selectedPlan.price)],
+            ].map(([k, v]) => (
+              <div key={k} className="flex justify-between text-sm">
+                <span className="text-slate-400">{k}</span>
+                <span className="text-white font-medium">{v}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 text-center mt-5 pt-4 border-t border-white/10">
+            Thank you for using AL-HUSSAIN DATA
+          </p>
         </div>
-        <button onClick={() => { setSuccess(null); setSelectedPlan(null) }}
-          className="btn-primary w-full justify-center py-3">
-          Buy more data
-        </button>
+
+        <div className="flex gap-3 no-print">
+          <button onClick={() => window.print()}
+            className="btn-ghost flex-1 justify-center gap-2">
+            <Download size={16} /> Download Receipt
+          </button>
+          <button onClick={() => { setSuccess(null); setSelectedPlan(null) }}
+            className="btn-primary flex-1 justify-center">
+            Buy more data
+          </button>
+        </div>
       </div>
     )
   }
@@ -128,13 +129,11 @@ export default function BuyData() {
         <p className="text-slate-400 text-sm">Affordable data plans for all networks</p>
       </div>
 
-      {/* Wallet balance */}
       <div className="glass-card p-4 flex items-center justify-between">
         <span className="text-sm text-slate-400">Wallet Balance</span>
         <span className="font-display font-bold text-white">{formatNaira(user?.walletBalance || 0)}</span>
       </div>
 
-      {/* Network selector */}
       <div>
         <label className="input-label">Select Network</label>
         <div className="grid grid-cols-4 gap-2">
@@ -154,7 +153,6 @@ export default function BuyData() {
         </div>
       </div>
 
-      {/* Phone number */}
       <div>
         <label className="input-label">Phone Number</label>
         <div className="relative">
@@ -165,7 +163,6 @@ export default function BuyData() {
         </div>
       </div>
 
-      {/* Plans grid */}
       <div>
         <label className="input-label">Choose Plan</label>
         {loadingPlans ? (
@@ -194,7 +191,6 @@ export default function BuyData() {
         )}
       </div>
 
-      {/* Summary + Buy */}
       {selectedPlan && (
         <div className="glass-card p-5 space-y-4 animate-slide-up">
           <h3 className="font-display font-semibold text-sm text-slate-400 uppercase tracking-wider">Order Summary</h3>
