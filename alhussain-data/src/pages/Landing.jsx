@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import WhatsAppButton from '../components/WhatsAppButton'
 import { ArrowRight, Check, Wifi, Phone, Zap, Tv, Wallet, Gift } from 'lucide-react'
+
+const WHATSAPP_LINK = 'https://wa.me/2347042728644'
 
 const SERVICES = [
   { icon: Wifi, label: 'Data Bundles', desc: 'MTN, Airtel, Glo & 9Mobile bundles at the best rates — daily, weekly, or monthly.', color: 'text-brand-blue', bg: 'bg-brand-blue/10', gradient: 'from-brand-blue to-brand-cyan' },
@@ -34,7 +37,6 @@ export default function Landing() {
 
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex items-center px-6 md:px-16 pt-28 pb-16 overflow-hidden">
-        {/* Background glows */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full"
                style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)' }} />
@@ -43,7 +45,6 @@ export default function Landing() {
         </div>
 
         <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 items-center relative z-10">
-          {/* Left */}
           <div className="animate-slide-up">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-cyan/25 bg-brand-cyan/10 text-brand-cyan text-xs font-medium mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse-slow" />
@@ -78,9 +79,7 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Right — Wallet Visual */}
           <div className="flex flex-col items-center gap-4">
-            {/* Floating wallet card */}
             <div className="w-full max-w-sm rounded-2xl p-6 animate-float wallet-glow"
                  style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #1E2A5E 50%, #312E81 100%)', border: '1px solid rgba(99,130,246,0.3)' }}>
               <div className="flex justify-between items-start mb-8">
@@ -98,7 +97,6 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Mini transactions */}
             <div className="w-full max-w-sm space-y-2">
               {[
                 { icon: '📶', name: 'MTN 2GB Data', time: 'Just now', amount: '−₦850', minus: true },
@@ -125,7 +123,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── STATS BAR ── */}
       <div className="border-y border-white/[0.06] bg-navy-2">
         <div className="max-w-4xl mx-auto px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {STATS.map((s) => (
@@ -137,7 +134,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ── SERVICES ── */}
       <section id="services" className="px-6 md:px-16 py-24">
         <div className="max-w-6xl mx-auto">
           <p className="section-eyebrow">What we offer</p>
@@ -165,7 +161,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
       <section id="how" className="bg-navy-2 px-6 md:px-16 py-24">
         <div className="max-w-6xl mx-auto">
           <p className="section-eyebrow">The process</p>
@@ -192,7 +187,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
       <section className="px-6 md:px-16 py-24 text-center">
         <div className="max-w-xl mx-auto glass-card p-12"
              style={{ background: 'linear-gradient(135deg, rgba(30,58,138,0.35), rgba(49,46,129,0.25))' }}>
@@ -204,23 +198,35 @@ export default function Landing() {
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link to="/register" className="btn-primary btn-lg">Create free account</Link>
-            <a href="#contact" className="btn-ghost btn-lg">Talk to us</a>
+            <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="btn-ghost btn-lg">Talk to us</a>
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
       <footer className="border-t border-white/[0.06] px-6 md:px-16 py-6 flex flex-wrap items-center justify-between gap-4">
         <Link to="/" className="font-display font-bold text-base flex items-center gap-2">
           AL-HUSSAIN <span className="text-brand-cyan">DATA</span>
         </Link>
         <p className="text-slate-500 text-sm">© 2025 AL-HUSSAIN DATA. All rights reserved.</p>
         <div className="flex gap-5">
-          {['Privacy', 'Terms', 'Contact'].map((l) => (
-            <a key={l} href="#" className="text-slate-500 text-sm hover:text-white transition-colors">{l}</a>
+          {[
+            { label: 'Privacy', href: '#' },
+            { label: 'Terms', href: '#' },
+            { label: 'Contact', href: WHATSAPP_LINK, external: true },
+          ].map((l) => (
+            <a
+              key={l.label}
+              href={l.href}
+              target={l.external ? '_blank' : undefined}
+              rel={l.external ? 'noopener noreferrer' : undefined}
+              className="text-slate-500 text-sm hover:text-white transition-colors"
+            >
+              {l.label}
+            </a>
           ))}
         </div>
       </footer>
+      <WhatsAppButton />
     </div>
   )
 }

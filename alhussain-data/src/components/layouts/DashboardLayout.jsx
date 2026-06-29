@@ -6,6 +6,7 @@ import {
   Gift, User, LogOut, Menu, X, ChevronRight, Bell,
 } from 'lucide-react'
 import { formatNaira } from '../../utils/helpers'
+import WhatsAppButton from '../WhatsAppButton'
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -161,6 +162,7 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+      <WhatsAppButton />
     </div>
   )
 }
