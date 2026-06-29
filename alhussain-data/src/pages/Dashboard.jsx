@@ -17,6 +17,7 @@ export default function Dashboard() {
   const { user, updateUser } = useAuth()
   const [balance, setBalance] = useState(user?.walletBalance || 0)
   const [transactions, setTransactions] = useState([])
+  const [totalTxCount, setTotalTxCount] = useState(0)
   const [referral, setReferral] = useState(null)
   const [loadingTx, setLoadingTx] = useState(true)
   const [copied, setCopied] = useState(false)
@@ -40,13 +41,15 @@ export default function Dashboard() {
         updateUser({ walletBalance: bal })
       }
       if (txRes.status === 'fulfilled') {
-        setTransactions(txRes.value.data.transactions?.slice(0, 5) || [])
+        const allTx = txRes.value.data.transactions || []
+        setTransactions(allTx.slice(0, 5))
+        setTotalTxCount(txRes.value.data.total || 0)
       }
       if (refRes.status === 'fulfilled') {
         setReferral(refRes.value.data)
       }
     } catch (e) {
-      // fail silently for demo
+      // fail silently
     } finally {
       setLoadingTx(false)
     }
@@ -60,18 +63,14 @@ export default function Dashboard() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Demo transactions if backend not connected
-  const demoTx = [
-    { _id: '1', type: 'data', description: 'MTN 2GB Data — 08012345678', amount: 850, status: 'success', createdAt: new Date(Date.now() - 300000).toISOString() },
-    { _id: '2', type: 'wallet_fund', description: 'Wallet Funding via Paystack', amount: 5000, status: 'success', createdAt: new Date(Date.now() - 3600000).toISOString() },
-    { _id: '3', type: 'electricity', description: 'AEDC Prepaid — Meter 1234', amount: 2000, status: 'success', createdAt: new Date(Date.now() - 86400000).toISOString() },
-    { _id: '4', type: 'airtime', description: 'Airtel Airtime — 09012345678', amount: 500, status: 'pending', createdAt: new Date(Date.now() - 172800000).toISOString() },
-  ]
-  const displayTx = transactions.length > 0 ? transactions : demoTx
+  const SPEND_TYPES = ['data', 'airtime', 'electricity', 'tv']
+  const totalSpent = transactions
+    .filter((tx) => SPEND_TYPES.includes(tx.type) && tx.status === 'success')
+    .reduce((sum, tx) => sum + (tx.amount || 0), 0)
+  const displayTx = transactions
 
   return (
     <div className="space-y-6 max-w-5xl">
-      {/* Greeting */}
       <div>
         <h2 className="font-display text-2xl font-bold tracking-tight">
           Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
@@ -80,9 +79,7 @@ export default function Dashboard() {
         <p className="text-slate-400 text-sm mt-0.5">Here's your account overview</p>
       </div>
 
-      {/* Wallet card + quick stats row */}
       <div className="grid md:grid-cols-3 gap-4">
-        {/* Main wallet card */}
         <div className="md:col-span-2 rounded-2xl p-6 relative overflow-hidden"
              style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #1E2A5E 50%, #312E81 100%)' }}>
           <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-20"
@@ -118,28 +115,26 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-rows-2 gap-4">
           <div className="glass-card p-4">
             <div className="flex items-center gap-2 mb-2">
               <ArrowDownLeft size={15} className="text-emerald-400" />
               <span className="text-xs text-slate-400">Total spent</span>
             </div>
-            <p className="font-display text-xl font-bold text-white">₦18,350</p>
-            <p className="text-xs text-slate-500 mt-0.5">This month</p>
+            <p className="font-display text-xl font-bold text-white">{formatNaira(totalSpent)}</p>
+            <p className="text-xs text-slate-500 mt-0.5">Recent activity</p>
           </div>
           <div className="glass-card p-4">
             <div className="flex items-center gap-2 mb-2">
               <ArrowUpRight size={15} className="text-brand-blue" />
               <span className="text-xs text-slate-400">Transactions</span>
             </div>
-            <p className="font-display text-xl font-bold text-white">24</p>
-            <p className="text-xs text-slate-500 mt-0.5">This month</p>
+            <p className="font-display text-xl font-bold text-white">{totalTxCount}</p>
+            <p className="text-xs text-slate-500 mt-0.5">All time</p>
           </div>
         </div>
       </div>
 
-      {/* Quick actions */}
       <div>
         <h3 className="font-display font-semibold text-sm text-slate-400 uppercase tracking-wider mb-3">Quick actions</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -160,9 +155,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent transactions + Referral */}
       <div className="grid md:grid-cols-3 gap-4">
-        {/* Transactions */}
         <div className="md:col-span-2 glass-card p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-semibold text-base">Recent Transactions</h3>
@@ -184,6 +177,11 @@ export default function Dashboard() {
                   <div className="h-3 w-16 bg-white/5 rounded animate-pulse" />
                 </div>
               ))}
+            </div>
+          ) : displayTx.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-3xl mb-2">📭</div>
+              <p className="text-slate-400 text-sm">No transactions yet. Get started below!</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -214,7 +212,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Referral card */}
         <div className="glass-card p-5 flex flex-col">
           <h3 className="font-display font-semibold text-base mb-1">Referral Bonus</h3>
           <p className="text-xs text-slate-400 mb-4">Invite friends, earn wallet credits</p>
@@ -228,12 +225,12 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="rounded-xl bg-white/5 p-3 text-center">
-              <p className="font-display text-xl font-bold text-white">{referral?.count || 0}</p>
+              <p className="font-display text-xl font-bold text-white">{referral?.count ?? 0}</p>
               <p className="text-xs text-slate-400 mt-0.5">Referrals</p>
             </div>
             <div className="rounded-xl bg-white/5 p-3 text-center">
               <p className="font-display text-xl font-bold text-emerald-400">
-                {formatNaira(referral?.earnings || 0)}
+                {formatNaira(referral?.earnings ?? 0)}
               </p>
               <p className="text-xs text-slate-400 mt-0.5">Earned</p>
             </div>

@@ -42,11 +42,9 @@ export default function Referral() {
     } else copyLink()
   }
 
-  const demoRefs = [
-    { _id: '1', name: 'Ahmad Musa', joinedAt: new Date(Date.now() - 86400000).toISOString(), bonus: 200, status: 'active' },
-    { _id: '2', name: 'Fatima B.', joinedAt: new Date(Date.now() - 259200000).toISOString(), bonus: 200, status: 'active' },
-  ]
-  const displayRefs = referrals.length > 0 ? referrals : demoRefs
+  const referralCount = info?.count ?? 0
+  const referralEarnings = info?.earnings ?? 0
+  const displayRefs = referrals
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -55,11 +53,10 @@ export default function Referral() {
         <p className="text-slate-400 text-sm">Invite friends and earn ₦200 for every successful signup</p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { icon: Users, label: 'Referrals', value: info?.count || demoRefs.length, color: 'text-brand-blue' },
-          { icon: TrendingUp, label: 'Earned', value: formatNaira(info?.earnings || demoRefs.length * 200), color: 'text-emerald-400' },
+          { icon: Users, label: 'Referrals', value: referralCount, color: 'text-brand-blue' },
+          { icon: TrendingUp, label: 'Earned', value: formatNaira(referralEarnings), color: 'text-emerald-400' },
           { icon: Gift, label: 'Per referral', value: '₦200', color: 'text-brand-cyan' },
         ].map((s) => {
           const Icon = s.icon
@@ -73,7 +70,6 @@ export default function Referral() {
         })}
       </div>
 
-      {/* Referral link */}
       <div className="glass-card p-6">
         <h3 className="font-display font-semibold mb-4">Your Referral Link</h3>
         <div className="rounded-xl bg-brand-blue/5 border border-brand-blue/20 p-4 mb-4">
@@ -93,7 +89,6 @@ export default function Referral() {
         </div>
       </div>
 
-      {/* How it works */}
       <div className="glass-card p-5">
         <h3 className="font-display font-semibold mb-4">How it works</h3>
         <div className="space-y-4">
@@ -112,7 +107,6 @@ export default function Referral() {
         </div>
       </div>
 
-      {/* Referrals list */}
       <div className="glass-card p-5">
         <h3 className="font-display font-semibold mb-4">Your Referrals</h3>
         {loading ? (
