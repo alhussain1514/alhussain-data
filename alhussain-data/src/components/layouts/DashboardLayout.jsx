@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { formatNaira } from '../../utils/helpers'
 import WhatsAppButton from '../WhatsAppButton'
+import Logo from '../Logo'
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -40,11 +41,8 @@ export default function DashboardLayout() {
     <aside className={`${mobile ? 'w-full' : 'w-64'} h-full flex flex-col bg-navy-2 border-r border-white/[0.06]`}>
       {/* Brand */}
       <div className="px-6 py-5 border-b border-white/[0.06]">
-        <Link to="/" className="flex items-center gap-2 font-display font-bold text-lg tracking-tight">
-          <div className="w-8 h-8 rounded-lg bg-brand-blue/20 flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-brand-cyan" />
-          </div>
-          AL-HUSSAIN <span className="text-brand-cyan">DATA</span>
+        <Link to="/" className="flex items-center">
+          <Logo size={32} textClass="font-display font-bold text-lg tracking-tight" />
         </Link>
       </div>
 

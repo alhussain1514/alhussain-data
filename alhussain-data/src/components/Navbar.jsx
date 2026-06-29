@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import Logo from './Logo'
-import Logo from './Logo'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -21,11 +20,8 @@ export default function Navbar() {
          style={{ background: 'rgba(10,15,30,0.88)', backdropFilter: 'blur(14px)', height: '68px' }}>
 
       {/* Logo */}
-      <Link to="/" className="flex items-center gap-2 font-display font-bold text-lg tracking-tight">
-        <div className="w-8 h-8 rounded-lg bg-brand-blue/20 flex items-center justify-center">
-          <div className="w-3 h-3 rounded-full bg-brand-cyan" />
-        </div>
-        AL-HUSSAIN <span className="text-brand-cyan">DATA</span>
+      <Link to="/" className="flex items-center">
+        <Logo size={34} textClass="font-display font-bold text-lg tracking-tight" />
       </Link>
 
       {/* Desktop links */}
