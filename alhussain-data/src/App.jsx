@@ -15,6 +15,7 @@ import PayTV from './pages/PayTV'
 import FundWallet from './pages/FundWallet'
 import Transactions from './pages/Transactions'
 import Referral from './pages/Referral'
+import ResultChecker from './pages/ResultChecker'
 import Profile from './pages/Profile'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
@@ -74,6 +75,7 @@ function AppRoutes() {
         <Route path="fund-wallet" element={<FundWallet />} />
         <Route path="transactions" element={<Transactions />} />
         <Route path="referral" element={<Referral />} />
+    <Route path="result-checker" element={<ResultChecker />} />
         <Route path="profile" element={<Profile />} />
       </Route>
 

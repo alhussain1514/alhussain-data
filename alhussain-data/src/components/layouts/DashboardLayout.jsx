@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   LayoutDashboard, Wifi, Phone, Zap, Tv, Wallet, Receipt,
-  Gift, User, LogOut, Menu, X, ChevronRight, Bell,
+  Gift, User, LogOut, Menu, X, ChevronRight, Bell, GraduationCap,
 } from 'lucide-react'
 import { formatNaira } from '../../utils/helpers'
 import WhatsAppButton from '../WhatsAppButton'
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { path: '/dashboard/buy-airtime', label: 'Buy Airtime', icon: Phone },
   { path: '/dashboard/electricity', label: 'Electricity', icon: Zap },
   { path: '/dashboard/tv', label: 'TV Subscription', icon: Tv },
+  { path: '/dashboard/result-checker', label: 'Result Checker', icon: GraduationCap },
   { path: '/dashboard/fund-wallet', label: 'Fund Wallet', icon: Wallet },
   { path: '/dashboard/transactions', label: 'Transactions', icon: Receipt },
   { path: '/dashboard/referral', label: 'Referral', icon: Gift },
