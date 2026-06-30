@@ -211,3 +211,51 @@ export const payTV = async (req, res, next) => {
     next(err)
   }
 }
+
+// -------------------- RESULT CHECKER --------------------
+// POST /api/vtu/result-checker/buy
+export const buyResultChecker = async (req, res, next) => {
+  try {
+    const { examName, quantity } = req.body
+    const validExams = ['WAEC', 'NECO', 'NABTEB']
+
+    if (!examName || !validExams.includes(examName.toUpperCase())) {
+      return res.status(400).json({ message: 'Exam name must be WAEC, NECO, or NABTEB.' })
+    }
+    const qty = Number(quantity)
+    if (!qty || qty < 1 || qty > 5) {
+      return res.status(400).json({ message: 'Quantity must be between 1 and 5.' })
+    }
+
+    const PIN_PRICES = { WAEC: 3600, NECO: 1500, NABTEB: 1200 }
+    const exam = examName.toUpperCase()
+    const amount = PIN_PRICES[exam] * qty
+
+    const { transaction } = await debitWallet({
+      userId: req.user._id,
+      amount,
+      type: 'result_checker',
+      description: `${exam} Result Checker x${qty}`,
+      meta: { examName: exam, quantity: qty },
+    })
+
+    try {
+      const providerRes = await vtuProvider.buyResultChecker({ examName: exam, quantity: qty })
+      await resolveTransaction({ transactionId: transaction._id, status: 'success', providerResponse: providerRes })
+      res.json({
+        message: 'Result checker pin(s) purchased successfully!',
+        reference: transaction.reference,
+        pins: providerRes.pins || [],
+      })
+    } catch (providerErr) {
+      await resolveTransaction({
+        transactionId: transaction._id,
+        status: 'failed',
+        providerResponse: providerErr.response?.data || { error: providerErr.message },
+      })
+      return res.status(502).json({ message: 'Pin purchase failed. You have been refunded.' })
+    }
+  } catch (err) {
+    next(err)
+  }
+}

@@ -8,6 +8,7 @@ import {
   payElectricity,
   verifyDecoder,
   payTV,
+  buyResultChecker,
 } from '../controllers/vtu.controller.js'
 
 const router = express.Router()
@@ -22,5 +23,7 @@ router.post('/electricity/pay', protect, payElectricity)
 
 router.post('/tv/verify', protect, verifyDecoder)
 router.post('/tv/pay', protect, payTV)
+
+router.post('/result-checker/buy', protect, buyResultChecker)
 
 export default router

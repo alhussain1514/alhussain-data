@@ -110,3 +110,12 @@ export const vtuProvider = {
     return assertProviderSuccess(res.data)
   },
 }
+
+vtuProvider.buyResultChecker = async function ({ examName, quantity }) {
+  const res = await vtuClient.post(
+    '/result_checker/purchase.php',
+    { exam_name: examName, quantity },
+    { headers: { 'Content-Type': 'application/json' } }
+  )
+  return assertProviderSuccess(res.data)
+}
