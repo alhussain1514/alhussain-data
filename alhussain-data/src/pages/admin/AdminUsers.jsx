@@ -49,12 +49,8 @@ export default function AdminUsers() {
       toast.success(`${formatNaira(amt)} credited to ${fundModal.name}`)
       setFundModal(null)
       setFundAmount('')
-    } catch (err) {
-      // Demo fallback
-      setUsers((prev) => prev.map((u) => u._id === fundModal._id ? { ...u, walletBalance: u.walletBalance + amt } : u))
-      toast.success(`${formatNaira(amt)} credited (demo mode)`)
-      setFundModal(null)
-      setFundAmount('')
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Failed to credit wallet. No money was moved.')
     } finally {
       setFunding(false)
     }
