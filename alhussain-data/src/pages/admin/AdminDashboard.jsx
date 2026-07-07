@@ -12,23 +12,19 @@ export default function AdminDashboard() {
   useEffect(() => { load() }, [])
 
   const load = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
       const res = await adminAPI.getDashboardStats()
       setStats(res.data.stats)
       setRecent(res.data.recentTransactions || [])
-    } catch (err) {
-      setError('Failed to load dashboard stats.')
-    } finally {
-      setLoading(false)
-    }
+    } catch { setError('Failed to load stats.') }
+    finally { setLoading(false) }
   }
 
   const cards = [
-    { label: 'Total Users', value: stats?.totalUsers?.toLocaleString() ?? '0', sub: `+${stats?.newUsersToday ?? 0} today`, icon: Users, color: 'text-brand-blue', bg: 'bg-brand-blue/10' },
+    { label: 'Total Users', value: stats?.totalUsers?.toLocaleString() ?? '0', sub: '+' + (stats?.newUsersToday ?? 0) + ' today', icon: Users, color: 'text-brand-blue', bg: 'bg-brand-blue/10' },
     { label: 'Total Transactions', value: stats?.totalTransactions?.toLocaleString() ?? '0', sub: 'All time', icon: Receipt, color: 'text-brand-cyan', bg: 'bg-brand-cyan/10' },
-    { label: 'Total Revenue', value: formatNaira(stats?.totalRevenue ?? 0), sub: `+${formatNaira(stats?.revenueToday ?? 0)} today`, icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+    { label: 'Total Revenue', value: formatNaira(stats?.totalRevenue ?? 0), sub: '+' + formatNaira(stats?.revenueToday ?? 0) + ' today', icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
     { label: 'Wallet Liability', value: formatNaira(stats?.walletBalanceSum ?? 0), sub: 'Sum of all balances', icon: Wallet, color: 'text-brand-purple', bg: 'bg-brand-purple/10' },
   ]
 
@@ -43,39 +39,32 @@ export default function AdminDashboard() {
           <RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Refresh
         </button>
       </div>
-
-      {error && <div className="glass-card p-4 border-red-500/20 text-red-400 text-sm">{error}</div>}
-
+      {error && <div className="glass-card p-4 text-red-400 text-sm border border-red-500/20">{error}</div>}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c) => {
           const Icon = c.icon
           return (
             <div key={c.label} className="glass-card p-5">
               <div className="flex items-center justify-between mb-3">
-                <div className={`w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center`}>
+                <div className={'w-10 h-10 rounded-xl ' + c.bg + ' flex items-center justify-center'}>
                   <Icon size={19} className={c.color} />
                 </div>
                 <ArrowUpRight size={14} className="text-slate-600" />
               </div>
-              {loading ? (
-                <div className="h-7 w-28 bg-white/5 rounded animate-pulse mb-1" />
-              ) : (
-                <p className="font-display text-2xl font-bold text-white">{c.value}</p>
-              )}
+              {loading ? <div className="h-7 w-28 bg-white/5 rounded animate-pulse mb-1" /> : <p className="font-display text-2xl font-bold text-white">{c.value}</p>}
               <p className="text-xs text-slate-400 mt-1">{c.label}</p>
               <p className="text-xs text-emerald-400 mt-1">{c.sub}</p>
             </div>
           )
         })}
       </div>
-
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-semibold text-base">Recent Transactions</h3>
-          <a href="/admin/transactions" className="text-xs text-brand-blue hover:text-brand-cyan transition-colors">View all</a>
+          <a href="/admin/transactions" className="text-xs text-brand-blue hover:text-brand-cyan">View all</a>
         </div>
         {loading ? (
-          <div className="space-y-3">{[...Array(5)].map((_, i) => (<div key={i} className="flex items-center gap-3"><div className="w-7 h-7 rounded-full bg-white/5 animate-pulse" /><div className="flex-1 h-3 bg-white/5 rounded animate-pulse" /><div className="h-3 w-20 bg-white/5 rounded animate-pulse" /></div>))}</div>
+          <div className="space-y-3">{[1,2,3,4,5].map((i) => (<div key={i} className="flex items-center gap-3"><div className="w-7 h-7 rounded-full bg-white/5 animate-pulse" /><div className="flex-1 h-3 bg-white/5 rounded animate-pulse" /><div className="h-3 w-20 bg-white/5 rounded animate-pulse" /></div>))}</div>
         ) : recent.length === 0 ? (
           <div className="text-center py-8"><p className="text-slate-400 text-sm">No transactions yet.</p></div>
         ) : (
@@ -87,10 +76,10 @@ export default function AdminDashboard() {
                   const typeInfo = TX_TYPES[tx.type] || { icon: '📦', label: tx.type }
                   return (
                     <tr key={tx._id} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02]">
-                      <td className="py-3"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-brand-blue/20 flex items-center justify-center text-xs font-bold text-brand-blue flex-shrink-0">{tx.user?.name?.[0]?.toUpperCase() || '?'}</div><span className="text-white font-medium">{tx.user?.name || 'Unknown'}</span></div></td>
+                      <td className="py-3"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-brand-blue/15 flex items-center justify-center text-xs font-bold text-brand-blue">{tx.user?.name?.[0]?.toUpperCase() || '?'}</div><span className="text-white font-medium">{tx.user?.name || 'Unknown'}</span></div></td>
                       <td className="py-3 text-slate-300">{typeInfo.icon} {typeInfo.label}</td>
                       <td className="py-3 font-medium text-white">{formatNaira(tx.amount)}</td>
-                      <td className="py-3"><span className={`text-xs px-2 py-0.5 rounded-md font-medium ${txStatusColor(tx.status)}`}>{txStatusLabel(tx.status)}</span></td>
+                      <td className="py-3"><span className={'text-xs px-2 py-0.5 rounded-md font-medium ' + txStatusColor(tx.status)}>{txStatusLabel(tx.status)}</span></td>
                       <td className="py-3 text-slate-500 text-xs">{formatDateShort(tx.createdAt)}</td>
                     </tr>
                   )
