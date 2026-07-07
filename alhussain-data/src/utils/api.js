@@ -81,3 +81,5 @@ export const adminAPI = {
 }
 
 export default api
+
+export const updateUserStatus = (id, status) => api.put(`/admin/users/${id}/status`, { status })

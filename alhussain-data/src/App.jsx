@@ -20,6 +20,7 @@ import Profile from './pages/Profile'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminTransactions from './pages/admin/AdminTransactions'
+import AdminPricing from './pages/admin/AdminPricing'
 
 // Layouts
 import DashboardLayout from './components/layouts/DashboardLayout'
@@ -84,6 +85,7 @@ function AppRoutes() {
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="transactions" element={<AdminTransactions />} />
+      <Route path="pricing" element={<AdminPricing />} />
       </Route>
 
       {/* Fallback */}
