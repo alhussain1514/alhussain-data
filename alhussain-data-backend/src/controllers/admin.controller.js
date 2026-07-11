@@ -166,7 +166,16 @@ export const updatePricing = async (req, res, next) => {
     let pricing = await Pricing.findOne()
     if (!pricing) pricing = new Pricing()
 
-    if (dataPlans) pricing.dataPlans = dataPlans
+    if (dataPlans) pricing.dataPlans = dataPlans.map((p) => ({
+      id: p.id,
+      name: p.name,
+      duration: p.duration,
+      network: p.network,
+      providerPrice: p.providerPrice || p.costPrice || 0,
+      sellingPrice: p.sellingPrice || p.price || 0,
+      providerPlanId: p.providerPlanId || '',
+      active: p.active !== false,
+    }))
     if (tvPlans) pricing.tvPlans = tvPlans
     if (airtimeDiscount) pricing.airtimeDiscount = airtimeDiscount
     if (electricityFee !== undefined) pricing.electricityFee = electricityFee
