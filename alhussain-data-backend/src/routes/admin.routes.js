@@ -7,6 +7,7 @@ import {
   updateUserStatus,
   getAllTransactions,
   getDashboardStats,
+  getProviderBalance,
   updatePricing,
 } from '../controllers/admin.controller.js'
 
@@ -16,6 +17,7 @@ const router = express.Router()
 router.use(protect, adminOnly)
 
 router.get('/stats', getDashboardStats)
+router.get('/provider-balance', getProviderBalance)
 
 router.get('/users', getUsers)
 router.get('/users/:id', getUserById)

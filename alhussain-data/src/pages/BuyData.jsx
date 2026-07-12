@@ -5,24 +5,15 @@ import { vtuAPI } from '../utils/api'
 import { NETWORK_LIST, NETWORKS, formatNaira } from '../utils/helpers'
 import { useAuth } from '../context/AuthContext'
 
-const DEMO_PLANS = {
-  MTN: [
-    { id: 'mtn-1', name: '1GB', duration: '1 Week', price: 490 },
-    { id: 'mtn-2', name: '2GB', duration: '1 Week', price: 810 },
-  ],
-  GLO: [
-    { id: 'glo-1', name: '500MB', duration: '30 Days', price: 330 },
-  ],
-}
-
 export default function BuyData() {
   const { user, updateUser } = useAuth()
   const [selectedNetwork, setSelectedNetwork] = useState('MTN')
-  const [plans, setPlans] = useState(DEMO_PLANS.MTN)
+  const [plans, setPlans] = useState([])
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [phone, setPhone] = useState(user?.phone || '')
   const [loading, setLoading] = useState(false)
   const [loadingPlans, setLoadingPlans] = useState(false)
+  const [plansError, setPlansError] = useState(null)
   const [success, setSuccess] = useState(null)
 
   useEffect(() => {
@@ -32,11 +23,13 @@ export default function BuyData() {
 
   const loadPlans = async (network) => {
     setLoadingPlans(true)
+    setPlansError(null)
     try {
       const res = await vtuAPI.getDataPlans(network)
       setPlans(res.data.plans)
     } catch {
-      setPlans(DEMO_PLANS[network] || [])
+      setPlans([])
+      setPlansError('Could not load plans. Check your connection and try again.')
     } finally {
       setLoadingPlans(false)
     }
@@ -171,6 +164,10 @@ export default function BuyData() {
               <div key={i} className="h-20 glass-card animate-pulse rounded-xl" />
             ))}
           </div>
+        ) : plansError ? (
+          <div className="glass-card p-4 text-red-400 text-sm border border-red-500/20">{plansError}</div>
+        ) : plans.length === 0 ? (
+          <div className="glass-card p-4 text-slate-400 text-sm text-center">No active plans for this network yet.</div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {plans.map((plan) => (

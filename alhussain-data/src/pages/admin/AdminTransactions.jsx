@@ -19,7 +19,11 @@ export default function AdminTransactions() {
   const load = async () => {
     setLoading(true)
     try {
-      const res = await adminAPI.getTransactions(page)
+      const res = await adminAPI.getTransactions(page, {
+        status: statusFilter || undefined,
+        type: typeFilter || undefined,
+        search: search || undefined,
+      })
       setTransactions(res.data.transactions || [])
       setTotalPages(res.data.pages || 1)
       setTotal(res.data.total || 0)
@@ -27,24 +31,44 @@ export default function AdminTransactions() {
     finally { setLoading(false) }
   }
 
+  const handleSearch = (e) => {
+    e.preventDefault()
+    setPage(1)
+    load()
+  }
+
   const filtered = transactions
-    .filter((tx) => !search || tx.user?.name?.toLowerCase().includes(search.toLowerCase()) || tx.user?.phone?.includes(search) || tx.reference?.toLowerCase().includes(search.toLowerCase()))
-    .filter((tx) => !statusFilter || tx.status === statusFilter)
-    .filter((tx) => !typeFilter || tx.type === typeFilter)
 
   const totalRevenue = transactions.filter((tx) => tx.status === 'success' && ['data','airtime','electricity','tv','result_checker'].includes(tx.type)).reduce((s, tx) => s + tx.amount, 0)
+
+  const exportCSV = () => {
+    const header = ['Date', 'Customer', 'Phone', 'Type', 'Description', 'Amount', 'Status', 'Reference']
+    const rows = transactions.map((tx) => [
+      new Date(tx.createdAt).toISOString(), tx.user?.name || '', tx.user?.phone || '', tx.type,
+      (tx.description || '').replace(/,/g, ';'), tx.amount, tx.status, tx.reference,
+    ])
+    const csv = [header, ...rows].map((r) => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `transactions-page${page}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="space-y-5 max-w-6xl">
       <div className="flex items-center justify-between">
         <div><h2 className="font-display text-2xl font-bold">Transactions</h2><p className="text-slate-400 text-sm">{total.toLocaleString()} total — Revenue this page: <span className="text-emerald-400 font-semibold">{formatNaira(totalRevenue)}</span></p></div>
         <button onClick={load} className="btn-ghost gap-2 text-sm"><RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Refresh</button>
+        <button onClick={exportCSV} className="btn-ghost gap-2 text-sm ml-2">⬇ Export CSV</button>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <form onSubmit={handleSearch} className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input type="text" placeholder="Search name, phone, reference..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field pl-10 w-full" />
+          <input type="text" placeholder="Search reference or description, press Enter..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field pl-10 w-full" />
         </div>
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }} className="input-field w-36">
           <option value="">All Status</option>
@@ -61,8 +85,8 @@ export default function AdminTransactions() {
           <option value="wallet_fund">Wallet Fund</option>
           <option value="result_checker">Result Checker</option>
         </select>
-        {(statusFilter || typeFilter) && <button onClick={() => { setStatusFilter(''); setTypeFilter(''); setPage(1) }} className="btn-ghost text-xs gap-1"><X size={12} /> Clear</button>}
-      </div>
+        {(statusFilter || typeFilter) && <button type="button" onClick={() => { setStatusFilter(''); setTypeFilter(''); setSearch(''); setPage(1) }} className="btn-ghost text-xs gap-1"><X size={12} /> Clear</button>}
+      </form>
 
       <div className="glass-card overflow-hidden">
         {loading ? <div className="p-8 text-center text-slate-400 text-sm">Loading transactions...</div> : filtered.length === 0 ? <div className="p-8 text-center text-slate-400 text-sm">No transactions found.</div> : (

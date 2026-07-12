@@ -52,18 +52,23 @@ export const TV_PROVIDERS = [
   { id: 'dstv', label: 'DStv', icon: '📺' },
   { id: 'gotv', label: 'GOtv', icon: '📡' },
   { id: 'startimes', label: 'Startimes', icon: '🌟' },
+  { id: 'showmax', label: 'Showmax', icon: '🎬' },
 ]
 
-// Electricity DISCOs
+// Electricity DISCOs — keys must match the disco keys in the backend's
+// ELECTRICITY_PROVIDERS list (src/data/dembossPlans.js) exactly.
 export const DISCOS = [
-  { id: 'aedc', label: 'AEDC (Abuja)' },
-  { id: 'ekedc', label: 'EKEDC (Eko)' },
-  { id: 'ibedc', label: 'IBEDC (Ibadan)' },
-  { id: 'ikedc', label: 'IKEDC (Ikeja)' },
-  { id: 'phedc', label: 'PHEDC (Port Harcourt)' },
-  { id: 'eedc', label: 'EEDC (Enugu)' },
-  { id: 'kaedco', label: 'KAEDCO (Kaduna)' },
-  { id: 'kedc', label: 'KEDC (Kano)' },
+  { id: 'abuja', label: 'AEDC (Abuja)' },
+  { id: 'benin', label: 'BEDC (Benin)' },
+  { id: 'eko', label: 'EKEDC (Eko)' },
+  { id: 'enugu', label: 'EEDC (Enugu)' },
+  { id: 'ibadan', label: 'IBEDC (Ibadan)' },
+  { id: 'ikeja', label: 'IKEDC (Ikeja)' },
+  { id: 'jos', label: 'JED (Jos)' },
+  { id: 'kaduna', label: 'KAEDC (Kaduna)' },
+  { id: 'kano', label: 'KEDCO (Kano)' },
+  { id: 'portharcourt', label: 'PHEDC (Port Harcourt)' },
+  { id: 'yola', label: 'YEDC (Yola)' },
 ]
 
 // Transaction status helpers
@@ -91,6 +96,7 @@ export const TX_TYPES = {
   airtime: { icon: '📱', label: 'Airtime' },
   electricity: { icon: '⚡', label: 'Electricity' },
   tv: { icon: '📺', label: 'TV Subscription' },
+  result_checker: { icon: '🎓', label: 'Result Checker' },
   wallet_fund: { icon: '💰', label: 'Wallet Funding' },
   withdrawal: { icon: '🏦', label: 'Withdrawal' },
   referral: { icon: '🎁', label: 'Referral Bonus' },

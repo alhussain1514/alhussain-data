@@ -1,4 +1,12 @@
-alhussain-data-backend/.env
-alhussain-data-backend/.env.example
+node_modules/
+dist/
+build/
 .vercel
-.env*
+
+# Ignore real env files, but keep the .env.example templates tracked
+.env
+.env.local
+alhussain-data-backend/.env
+alhussain-data/.env
+!.env.example
+!**/.env.example

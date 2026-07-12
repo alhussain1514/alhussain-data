@@ -60,8 +60,13 @@ export const vtuAPI = {
   payElectricity: (data) => api.post('/vtu/electricity/pay', data),
 
   // TV
+  getTvPlans: (provider) => api.get(`/vtu/tv/plans/${provider}`),
   verifyDecoder: (data) => api.post('/vtu/tv/verify', data),
   payTV: (data) => api.post('/vtu/tv/pay', data),
+
+  // Result Checker
+  getExamPinPrices: () => api.get('/vtu/result-checker/prices'),
+  buyResultChecker: (data) => api.post('/vtu/result-checker/buy', data),
 }
 
 // ── Referral ──
@@ -72,12 +77,13 @@ export const referralAPI = {
 
 // ── Admin ──
 export const adminAPI = {
-  getUsers: (page = 1) => api.get(`/admin/users?page=${page}`),
+  getUsers: (page = 1, params = {}) => api.get('/admin/users', { params: { page, ...params } }),
   getUserById: (id) => api.get(`/admin/users/${id}`),
   fundUser: (id, amount) => api.post(`/admin/users/${id}/fund`, { amount }),
-  getTransactions: (page = 1) => api.get(`/admin/transactions?page=${page}`),
+  getTransactions: (page = 1, params = {}) => api.get('/admin/transactions', { params: { page, ...params } }),
   updatePricing: (data) => api.put('/admin/pricing', data),
   getDashboardStats: () => api.get('/admin/stats'),
+  getProviderBalance: () => api.get('/admin/provider-balance'),
 }
 
 export default api

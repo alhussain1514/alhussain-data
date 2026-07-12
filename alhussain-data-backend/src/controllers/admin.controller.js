@@ -2,6 +2,7 @@ import User from '../models/User.js'
 import Transaction from '../models/Transaction.js'
 import Pricing from '../models/Pricing.js'
 import { creditWallet } from '../utils/walletEngine.js'
+import { vtuProvider } from '../utils/vtuProvider.js'
 
 // GET /api/admin/users?page=1
 export const getUsers = async (req, res, next) => {
@@ -9,10 +10,15 @@ export const getUsers = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1
     const limit = 20
     const skip = (page - 1) * limit
+    const { search } = req.query
+
+    const filter = search
+      ? { $or: [{ name: new RegExp(search, 'i') }, { phone: new RegExp(search, 'i') }, { email: new RegExp(search, 'i') }] }
+      : {}
 
     const [users, total] = await Promise.all([
-      User.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-      User.countDocuments(),
+      User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      User.countDocuments(filter),
     ])
 
     res.json({
@@ -85,11 +91,22 @@ export const getAllTransactions = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1
     const limit = 25
     const skip = (page - 1) * limit
-    const { status, type } = req.query
+    const { status, type, from, to, search } = req.query
 
     const filter = {}
     if (status) filter.status = status
     if (type) filter.type = type
+    if (from || to) {
+      filter.createdAt = {}
+      if (from) filter.createdAt.$gte = new Date(from)
+      if (to) filter.createdAt.$lte = new Date(to)
+    }
+    if (search) {
+      filter.$or = [
+        { reference: new RegExp(search, 'i') },
+        { description: new RegExp(search, 'i') },
+      ]
+    }
 
     const [transactions, total] = await Promise.all([
       Transaction.find(filter)
@@ -106,6 +123,18 @@ export const getAllTransactions = async (req, res, next) => {
   }
 }
 
+// GET /api/admin/provider-balance
+// Live wallet balance on Demboss's side, so the admin knows when to top up
+// the reseller account before it runs dry mid-transaction.
+export const getProviderBalance = async (req, res, next) => {
+  try {
+    const details = await vtuProvider.getUserDetails()
+    res.json({ name: details.name, balance: details.balance })
+  } catch (err) {
+    res.status(502).json({ message: 'Could not reach Demboss to fetch balance. Check DEMBOSS_API_TOKEN and network access.' })
+  }
+}
+
 // GET /api/admin/stats
 export const getDashboardStats = async (req, res, next) => {
   try {
@@ -119,28 +148,38 @@ export const getDashboardStats = async (req, res, next) => {
       revenueAgg,
       revenueTodayAgg,
       walletSumAgg,
+      statusBreakdownAgg,
+      typeBreakdownAgg,
       recentTransactions,
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ createdAt: { $gte: startOfToday } }),
       Transaction.countDocuments(),
       Transaction.aggregate([
-        { $match: { status: 'success', type: { $in: ['data', 'airtime', 'electricity', 'tv'] } } },
+        { $match: { status: 'success', type: { $in: ['data', 'airtime', 'electricity', 'tv', 'result_checker'] } } },
         { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
       Transaction.aggregate([
         {
           $match: {
             status: 'success',
-            type: { $in: ['data', 'airtime', 'electricity', 'tv'] },
+            type: { $in: ['data', 'airtime', 'electricity', 'tv', 'result_checker'] },
             createdAt: { $gte: startOfToday },
           },
         },
         { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
       User.aggregate([{ $group: { _id: null, total: { $sum: '$walletBalance' } } }]),
+      Transaction.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+      Transaction.aggregate([{ $group: { _id: '$type', count: { $sum: 1 } } }]),
       Transaction.find().populate('user', 'name').sort({ createdAt: -1 }).limit(8),
     ])
+
+    const statusBreakdown = { pending: 0, success: 0, failed: 0 }
+    statusBreakdownAgg.forEach((s) => { if (s._id in statusBreakdown) statusBreakdown[s._id] = s.count })
+
+    const typeBreakdown = {}
+    typeBreakdownAgg.forEach((t) => { typeBreakdown[t._id] = t.count })
 
     res.json({
       stats: {
@@ -150,6 +189,8 @@ export const getDashboardStats = async (req, res, next) => {
         totalRevenue: revenueAgg[0]?.total || 0,
         revenueToday: revenueTodayAgg[0]?.total || 0,
         walletBalanceSum: walletSumAgg[0]?.total || 0,
+        statusBreakdown,
+        typeBreakdown,
       },
       recentTransactions,
     })
@@ -161,22 +202,14 @@ export const getDashboardStats = async (req, res, next) => {
 // PUT /api/admin/pricing
 export const updatePricing = async (req, res, next) => {
   try {
-    const { dataPlans, tvPlans, airtimeDiscount, electricityFee } = req.body
+    const { dataPlans, tvPlans, examPinPrices, airtimeDiscount, electricityFee } = req.body
 
     let pricing = await Pricing.findOne()
     if (!pricing) pricing = new Pricing()
 
-    if (dataPlans) pricing.dataPlans = dataPlans.map((p) => ({
-      id: p.id,
-      name: p.name,
-      duration: p.duration,
-      network: p.network,
-      providerPrice: p.providerPrice || p.costPrice || 0,
-      sellingPrice: p.sellingPrice || p.price || 0,
-      providerPlanId: p.providerPlanId || '',
-      active: p.active !== false,
-    }))
+    if (dataPlans) pricing.dataPlans = dataPlans
     if (tvPlans) pricing.tvPlans = tvPlans
+    if (examPinPrices) pricing.examPinPrices = examPinPrices
     if (airtimeDiscount) pricing.airtimeDiscount = airtimeDiscount
     if (electricityFee !== undefined) pricing.electricityFee = electricityFee
 

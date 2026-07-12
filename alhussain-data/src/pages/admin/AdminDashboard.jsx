@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Users, Receipt, TrendingUp, Wallet, ArrowUpRight, RefreshCw } from 'lucide-react'
+import { Users, Receipt, TrendingUp, Wallet, ArrowUpRight, RefreshCw, Server, AlertTriangle } from 'lucide-react'
 import { adminAPI } from '../../utils/api'
 import { formatNaira, formatDateShort, txStatusColor, txStatusLabel, TX_TYPES } from '../../utils/helpers'
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null)
   const [recent, setRecent] = useState([])
+  const [providerBalance, setProviderBalance] = useState(null)
+  const [providerError, setProviderError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -19,6 +21,14 @@ export default function AdminDashboard() {
       setRecent(res.data.recentTransactions || [])
     } catch { setError('Failed to load. Check your connection.') }
     finally { setLoading(false) }
+
+    try {
+      const balRes = await adminAPI.getProviderBalance()
+      setProviderBalance(balRes.data)
+      setProviderError(null)
+    } catch {
+      setProviderError('Could not reach Demboss. Check DEMBOSS_API_TOKEN on the server.')
+    }
   }
 
   const cards = [
@@ -27,6 +37,9 @@ export default function AdminDashboard() {
     { label: 'Total Revenue', value: formatNaira(stats?.totalRevenue ?? 0), sub: '+' + formatNaira(stats?.revenueToday ?? 0) + ' today', icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
     { label: 'Wallet Liability', value: formatNaira(stats?.walletBalanceSum ?? 0), sub: 'Sum of all balances', icon: Wallet, color: 'text-brand-purple', bg: 'bg-brand-purple/10' },
   ]
+
+  const statusBreakdown = stats?.statusBreakdown || { pending: 0, success: 0, failed: 0 }
+  const statusTotal = statusBreakdown.pending + statusBreakdown.success + statusBreakdown.failed || 1
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -40,6 +53,30 @@ export default function AdminDashboard() {
         </button>
       </div>
       {error && <div className="glass-card p-4 text-red-400 text-sm border border-red-500/20">{error}</div>}
+
+      {/* Demboss provider wallet balance — so admin knows when to top up */}
+      <div className={'glass-card p-5 border ' + (providerError ? 'border-red-500/20' : 'border-brand-cyan/10')}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-cyan/10 flex items-center justify-center">
+              <Server size={18} className="text-brand-cyan" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 uppercase tracking-wider">Demboss Wallet Balance</p>
+              {providerError ? (
+                <p className="text-sm text-red-400 flex items-center gap-1.5 mt-0.5"><AlertTriangle size={13} /> {providerError}</p>
+              ) : providerBalance ? (
+                <p className="font-display text-xl font-bold text-white mt-0.5">₦{providerBalance.balance}</p>
+              ) : (
+                <div className="h-6 w-32 bg-white/5 rounded animate-pulse mt-1" />
+              )}
+            </div>
+          </div>
+          {providerBalance?.name && <p className="text-xs text-slate-500">{providerBalance.name}</p>}
+        </div>
+        <p className="text-xs text-slate-500 mt-3">This is your prepaid balance on Demboss's platform — top it up directly on their dashboard before it runs out, or purchases will start failing.</p>
+      </div>
+
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c) => {
           const Icon = c.icon
@@ -58,6 +95,29 @@ export default function AdminDashboard() {
           )
         })}
       </div>
+
+      {/* Transaction status breakdown — pending / success / failed at a glance */}
+      <div className="glass-card p-5">
+        <h3 className="font-display font-semibold mb-4">Transaction Status Breakdown</h3>
+        <div className="flex h-3 rounded-full overflow-hidden mb-4 bg-white/5">
+          {statusBreakdown.success > 0 && <div className="bg-emerald-400" style={{ width: `${(statusBreakdown.success / statusTotal) * 100}%` }} />}
+          {statusBreakdown.pending > 0 && <div className="bg-yellow-400" style={{ width: `${(statusBreakdown.pending / statusTotal) * 100}%` }} />}
+          {statusBreakdown.failed > 0 && <div className="bg-red-400" style={{ width: `${(statusBreakdown.failed / statusTotal) * 100}%` }} />}
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            ['success', 'Successful', 'text-emerald-400', 'bg-emerald-400/10'],
+            ['pending', 'Pending', 'text-yellow-400', 'bg-yellow-400/10'],
+            ['failed', 'Failed', 'text-red-400', 'bg-red-400/10'],
+          ].map(([key, label, textColor, bg]) => (
+            <div key={key} className={'rounded-xl p-3 ' + bg}>
+              <p className={'font-display text-xl font-bold ' + textColor}>{statusBreakdown[key].toLocaleString()}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-semibold">Recent Transactions</h3>

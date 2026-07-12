@@ -113,7 +113,7 @@ export const resolveTransaction = async ({ transactionId, status, providerRespon
   await transaction.save()
 
   // Auto-refund on failure for debit-type transactions
-  const debitTypes = ['data', 'airtime', 'electricity', 'tv', 'withdrawal']
+  const debitTypes = ['data', 'airtime', 'electricity', 'tv', 'result_checker', 'withdrawal']
   if (status === 'failed' && debitTypes.includes(transaction.type)) {
     await creditWallet({
       userId: transaction.user,

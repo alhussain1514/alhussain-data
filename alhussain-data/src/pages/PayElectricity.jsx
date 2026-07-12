@@ -13,27 +13,17 @@ export default function PayElectricity() {
   const [meterType, setMeterType] = useState('prepaid')
   const [meterNumber, setMeterNumber] = useState('')
   const [amount, setAmount] = useState('')
-  const [verifying, setVerifying] = useState(false)
   const [verified, setVerified] = useState(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(null)
 
-  const handleVerify = async () => {
+  // Demboss does not offer a meter pre-verification endpoint, so we can't
+  // confirm the customer's name before payment. We ask the customer to
+  // confirm the meter number themselves instead of faking a verified name.
+  const handleConfirm = () => {
     if (!disco) return toast.error('Select a DISCO')
     if (!meterNumber || meterNumber.length < 10) return toast.error('Enter a valid meter number')
-    setVerifying(true)
-    setVerified(null)
-    try {
-      const res = await vtuAPI.verifyMeter({ disco, meterType, meterNumber })
-      setVerified(res.data)
-      toast.success('Meter verified!')
-    } catch {
-      // Demo fallback
-      setVerified({ name: 'DEMO CUSTOMER', address: '12 Demo Street, Abuja', meterNumber })
-      toast.success('Meter verified (demo)!')
-    } finally {
-      setVerifying(false)
-    }
+    setVerified({ meterNumber, confirmedByUser: true })
   }
 
   const handlePay = async () => {
@@ -133,25 +123,23 @@ export default function PayElectricity() {
           <input type="text" placeholder="Enter meter number"
             value={meterNumber} onChange={(e) => { setMeterNumber(e.target.value); setVerified(null) }}
             className="input-field flex-1" />
-          <button onClick={handleVerify} disabled={verifying || !disco || !meterNumber}
+          <button onClick={handleConfirm} disabled={!disco || !meterNumber}
             className="btn-primary px-4 gap-2 disabled:opacity-60 flex-shrink-0">
-            {verifying
-              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              : <><Search size={15} /> Verify</>
-            }
+            <Search size={15} /> Continue
           </button>
         </div>
       </div>
 
-      {/* Verified result */}
+      {/* Self-confirmation notice — this provider has no meter lookup, so we
+          can't show the customer's real name before payment. */}
       {verified && (
-        <div className="glass-card p-4 border-emerald-400/20 animate-slide-up" style={{ borderColor: 'rgba(52,211,153,0.2)' }}>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-xs text-emerald-400 font-medium uppercase tracking-wider">Meter Verified</span>
+        <div className="glass-card p-4 border-yellow-400/20 animate-slide-up" style={{ borderColor: 'rgba(250,204,21,0.2)' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-yellow-400" />
+            <span className="text-xs text-yellow-400 font-medium uppercase tracking-wider">Double-check before you pay</span>
           </div>
-          <p className="font-display font-bold text-white">{verified.name}</p>
-          {verified.address && <p className="text-xs text-slate-400 mt-0.5">{verified.address}</p>}
+          <p className="text-sm text-white">Meter number: <span className="font-mono">{verified.meterNumber}</span></p>
+          <p className="text-xs text-slate-400 mt-1">We can't pre-verify this meter with your provider. Please confirm it's correct — payments to a wrong meter can't be reversed.</p>
         </div>
       )}
 

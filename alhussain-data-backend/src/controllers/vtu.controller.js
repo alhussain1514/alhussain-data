@@ -11,7 +11,7 @@ export const getDataPlans = async (req, res, next) => {
     const pricing = await Pricing.findOne()
     const plans = (pricing?.dataPlans || [])
       .filter((p) => p.network === network.toUpperCase() && p.active)
-      .map((p) => ({ id: p.id, name: p.name, duration: p.duration, price: p.sellingPrice }))
+      .map((p) => ({ id: p.id, name: p.name, duration: p.duration, price: p.sellingPrice, sellingPrice: p.sellingPrice, costPrice: p.costPrice, providerPlanId: p.providerPlanId }))
 
     res.json({ plans })
   } catch (err) {
@@ -42,9 +42,9 @@ export const buyData = async (req, res, next) => {
     try {
       const providerRes = await vtuProvider.buyData({
         network,
-        planId,
         phone,
         providerPlanId: plan.providerPlanId,
+        ref: transaction.reference,
       })
       await resolveTransaction({ transactionId: transaction._id, status: 'success', providerResponse: providerRes })
       res.json({ message: 'Data purchased successfully!', reference: transaction.reference })
@@ -82,7 +82,7 @@ export const buyAirtime = async (req, res, next) => {
     })
 
     try {
-      const providerRes = await vtuProvider.buyAirtime({ network, phone, amount })
+      const providerRes = await vtuProvider.buyAirtime({ network, phone, amount, ref: transaction.reference })
       await resolveTransaction({ transactionId: transaction._id, status: 'success', providerResponse: providerRes })
       res.json({ message: 'Airtime sent successfully!', reference: transaction.reference })
     } catch (providerErr) {
@@ -101,17 +101,19 @@ export const buyAirtime = async (req, res, next) => {
 // ───────────────────────── ELECTRICITY ─────────────────────────
 
 // POST /api/vtu/electricity/verify
+// Demboss's API does not offer a meter pre-verification endpoint, so we
+// return an honest "not supported" response instead of a fabricated name —
+// the frontend prompts the customer to double-check their own meter number.
 export const verifyMeter = async (req, res, next) => {
   try {
     const { disco, meterType, meterNumber } = req.body
     if (!disco || !meterType || !meterNumber) {
       return res.status(400).json({ message: 'DISCO, meter type, and meter number are required.' })
     }
-
     const result = await vtuProvider.verifyMeter({ disco, meterType, meterNumber })
-    res.json({ name: result.name || result.customer_name, address: result.address, meterNumber })
+    res.json({ supported: false, meterNumber, ...result })
   } catch (err) {
-    res.status(502).json({ message: 'Could not verify meter. Check the number and try again.' })
+    res.status(502).json({ supported: false, message: 'Verification is not available for this provider.' })
   }
 }
 
@@ -119,25 +121,29 @@ export const verifyMeter = async (req, res, next) => {
 export const payElectricity = async (req, res, next) => {
   try {
     const { disco, meterType, meterNumber, amount, customerName, customerPhone, customerAddress } = req.body
-    if (!disco || !meterType || !meterNumber || !amount || !customerName || !customerPhone || !customerAddress) {
-      return res.status(400).json({ message: 'All fields are required.' })
+    if (!disco || !meterType || !meterNumber || !amount) {
+      return res.status(400).json({ message: 'DISCO, meter type, meter number, and amount are required.' })
     }
     if (amount < 500) return res.status(400).json({ message: 'Minimum payment is ₦500.' })
 
+    const pricing = await Pricing.findOne()
+    const fee = pricing?.electricityFee || 0
+    const totalCharge = Number(amount) + fee
+
     const { transaction } = await debitWallet({
       userId: req.user._id,
-      amount,
+      amount: totalCharge,
       type: 'electricity',
       description: `${disco.toUpperCase()} ${meterType} — Meter ${meterNumber}`,
-      meta: { disco, meterType, meterNumber },
+      meta: { disco, meterType, meterNumber, customerName, customerPhone, customerAddress, billAmount: amount, fee },
     })
 
     try {
-      const providerRes = await vtuProvider.payElectricity({ disco, meterType, meterNumber, amount, customerName, customerPhone, customerAddress })
+      const providerRes = await vtuProvider.payElectricity({ disco, meterType, meterNumber, amount, ref: transaction.reference })
       await resolveTransaction({ transactionId: transaction._id, status: 'success', providerResponse: providerRes })
       res.json({
         message: 'Payment successful!',
-        token: providerRes.token || providerRes.purchased_code,
+        token: providerRes.token,
         reference: transaction.reference,
       })
     } catch (providerErr) {
@@ -155,31 +161,46 @@ export const payElectricity = async (req, res, next) => {
 
 // ───────────────────────── TV ─────────────────────────
 
+// GET /api/vtu/tv/plans/:provider
+export const getTvPlans = async (req, res, next) => {
+  try {
+    const { provider } = req.params
+    const pricing = await Pricing.findOne()
+    const plans = (pricing?.tvPlans || [])
+      .filter((p) => p.provider === provider.toLowerCase() && p.active)
+      .map((p) => ({ id: p.id, name: p.name, price: p.sellingPrice, sellingPrice: p.sellingPrice, costPrice: p.costPrice, providerPlanId: p.providerPlanId }))
+
+    res.json({ plans })
+  } catch (err) {
+    next(err)
+  }
+}
+
 // POST /api/vtu/tv/verify
+// See note on verifyMeter above — Demboss has no smartcard verification endpoint.
 export const verifyDecoder = async (req, res, next) => {
   try {
     const { provider, smartcard } = req.body
     if (!provider || !smartcard) {
       return res.status(400).json({ message: 'Provider and smartcard number are required.' })
     }
-
     const result = await vtuProvider.verifyDecoder({ provider, smartcard })
-    res.json({ name: result.customer_name || result.name, package: result.current_bouquet })
+    res.json({ supported: false, ...result })
   } catch (err) {
-    res.status(502).json({ message: 'Could not verify smartcard. Check the number and try again.' })
+    res.status(502).json({ supported: false, message: 'Verification is not available for this provider.' })
   }
 }
 
 // POST /api/vtu/tv/pay
 export const payTV = async (req, res, next) => {
   try {
-    const { provider, smartcard, planId, amount } = req.body
-    if (!provider || !smartcard || !planId || !amount) {
-      return res.status(400).json({ message: 'All fields are required.' })
+    const { provider, smartcard, planId } = req.body
+    if (!provider || !smartcard || !planId) {
+      return res.status(400).json({ message: 'Provider, smartcard number, and plan are required.' })
     }
 
     const pricing = await Pricing.findOne()
-    const plan = pricing?.tvPlans.find((p) => p.id === planId && p.provider === provider)
+    const plan = pricing?.tvPlans.find((p) => p.id === planId && p.provider === provider.toLowerCase())
     if (!plan) return res.status(404).json({ message: 'Selected plan was not found.' })
 
     const { transaction } = await debitWallet({
@@ -195,7 +216,7 @@ export const payTV = async (req, res, next) => {
         provider,
         smartcard,
         providerPlanId: plan.providerPlanId,
-        amount: plan.sellingPrice,
+        ref: transaction.reference,
       })
       await resolveTransaction({ transactionId: transaction._id, status: 'success', providerResponse: providerRes })
       res.json({ message: 'Subscription renewed!', reference: transaction.reference })
@@ -213,23 +234,37 @@ export const payTV = async (req, res, next) => {
 }
 
 // -------------------- RESULT CHECKER --------------------
+
+// GET /api/vtu/result-checker/prices
+export const getExamPinPrices = async (req, res, next) => {
+  try {
+    const pricing = await Pricing.findOne()
+    res.json({ prices: pricing?.examPinPrices || [] })
+  } catch (err) {
+    next(err)
+  }
+}
+
 // POST /api/vtu/result-checker/buy
 export const buyResultChecker = async (req, res, next) => {
   try {
     const { examName, quantity } = req.body
-    const validExams = ['WAEC', 'NECO', 'NABTEB']
+    const validExams = ['WAEC', 'NECO', 'JAMB', 'NABTEB']
 
     if (!examName || !validExams.includes(examName.toUpperCase())) {
-      return res.status(400).json({ message: 'Exam name must be WAEC, NECO, or NABTEB.' })
+      return res.status(400).json({ message: 'Exam name must be WAEC, NECO, JAMB, or NABTEB.' })
     }
     const qty = Number(quantity)
     if (!qty || qty < 1 || qty > 5) {
       return res.status(400).json({ message: 'Quantity must be between 1 and 5.' })
     }
 
-    const PIN_PRICES = { WAEC: 3600, NECO: 1500, NABTEB: 1200 }
     const exam = examName.toUpperCase()
-    const amount = PIN_PRICES[exam] * qty
+    const pricing = await Pricing.findOne()
+    const priceEntry = pricing?.examPinPrices?.find((p) => p.examName === exam)
+    if (!priceEntry) return res.status(404).json({ message: 'Pricing for this exam is not configured yet.' })
+
+    const amount = priceEntry.sellingPrice * qty
 
     const { transaction } = await debitWallet({
       userId: req.user._id,
@@ -240,7 +275,7 @@ export const buyResultChecker = async (req, res, next) => {
     })
 
     try {
-      const providerRes = await vtuProvider.buyResultChecker({ examName: exam, quantity: qty })
+      const providerRes = await vtuProvider.buyResultChecker({ examName: exam, quantity: qty, ref: transaction.reference })
       await resolveTransaction({ transactionId: transaction._id, status: 'success', providerResponse: providerRes })
       res.json({
         message: 'Result checker pin(s) purchased successfully!',
