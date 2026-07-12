@@ -7,6 +7,9 @@ import { useAuth } from '../context/AuthContext'
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000]
 const ADMIN_WHATSAPP = import.meta.env.VITE_ADMIN_WHATSAPP || ''
+const BANK_NAME = import.meta.env.VITE_BANK_NAME || 'Opay'
+const BANK_ACCOUNT_NUMBER = import.meta.env.VITE_BANK_ACCOUNT_NUMBER || '7042728644'
+const BANK_ACCOUNT_NAME = import.meta.env.VITE_BANK_ACCOUNT_NAME || 'HUSSAIN UMAR ADAM'
 
 export default function FundWallet() {
   const { user, updateUser } = useAuth()
@@ -37,8 +40,13 @@ export default function FundWallet() {
   const whatsappLink = () => {
     const amt = parseFloat(amount)
     const amountLine = amt > 0 ? `\nAmount: ${formatNaira(amt)}` : ''
-    const message = `Hello, I'd like to fund my wallet manually.\nName: ${user?.name || ''}\nPhone: ${user?.phone || ''}${amountLine}`
+    const message = `Hello, I've made a bank transfer and would like my wallet funded manually.\nName: ${user?.name || ''}\nPhone: ${user?.phone || ''}${amountLine}\n\n(Attaching my payment receipt below)`
     return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`
+  }
+
+  const copyAccountNumber = () => {
+    navigator.clipboard.writeText(BANK_ACCOUNT_NUMBER)
+    toast.success('Account number copied!')
   }
 
   return (
@@ -118,8 +126,30 @@ export default function FundWallet() {
           <p className="font-display font-semibold text-white">Manual Funding</p>
         </div>
         <p className="text-xs text-slate-400">
-          Prefer to pay by bank transfer? Enter an amount above (optional), then message us on WhatsApp — we'll confirm your payment and credit your wallet manually.
+          Transfer to the account below, then message us on WhatsApp with your payment receipt — we'll confirm and credit your wallet manually.
         </p>
+
+        <div className="bg-white/5 rounded-xl p-4 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-slate-400">Bank</span>
+            <span className="text-sm text-white font-medium">{BANK_NAME}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-slate-400">Account Number</span>
+            <button onClick={copyAccountNumber} className="text-sm text-white font-mono font-bold hover:text-brand-cyan transition-colors">
+              {BANK_ACCOUNT_NUMBER} <span className="text-xs text-slate-500">(tap to copy)</span>
+            </button>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-slate-400">Account Name</span>
+            <span className="text-sm text-white font-medium">{BANK_ACCOUNT_NAME}</span>
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-500">
+          After transferring, tap below to send us your receipt/screenshot on WhatsApp — include your name, phone number, and amount sent.
+        </p>
+
         {ADMIN_WHATSAPP ? (
           <a href={whatsappLink()} target="_blank" rel="noopener noreferrer"
             className="btn-primary w-full justify-center gap-2 py-3"
