@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 export default function BuyData() {
   const { user, updateUser } = useAuth()
   const [selectedNetwork, setSelectedNetwork] = useState('MTN')
+  const [selectedType, setSelectedType] = useState('ALL')
   const [plans, setPlans] = useState([])
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [phone, setPhone] = useState(user?.phone || '')
@@ -19,6 +20,7 @@ export default function BuyData() {
   useEffect(() => {
     loadPlans(selectedNetwork)
     setSelectedPlan(null)
+    setSelectedType('ALL')
   }, [selectedNetwork])
 
   const loadPlans = async (network) => {
@@ -157,6 +159,21 @@ export default function BuyData() {
       </div>
 
       <div>
+        <label className="input-label">Plan Type</label>
+        <div className="flex gap-2 flex-wrap">
+          {['ALL', 'SME', 'GIFTING', 'CORPORATE'].map((t) => (
+            <button key={t} onClick={() => setSelectedType(t)}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all
+                ${selectedType === t
+                  ? 'bg-brand-blue/20 text-brand-blue border border-brand-blue/30'
+                  : 'glass-card text-slate-400 hover:text-white'}`}>
+              {t === 'ALL' ? 'All Plans' : t.charAt(0) + t.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
         <label className="input-label">Choose Plan</label>
         {loadingPlans ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -166,11 +183,11 @@ export default function BuyData() {
           </div>
         ) : plansError ? (
           <div className="glass-card p-4 text-red-400 text-sm border border-red-500/20">{plansError}</div>
-        ) : plans.length === 0 ? (
-          <div className="glass-card p-4 text-slate-400 text-sm text-center">No active plans for this network yet.</div>
+        ) : plans.filter((p) => selectedType === 'ALL' || (p.planType || '').toUpperCase() === selectedType).length === 0 ? (
+          <div className="glass-card p-4 text-slate-400 text-sm text-center">No active plans in this category yet.</div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {plans.map((plan) => (
+            {plans.filter((p) => selectedType === 'ALL' || (p.planType || '').toUpperCase() === selectedType).map((plan) => (
               <button key={plan.id}
                 onClick={() => setSelectedPlan(plan)}
                 className={`p-4 rounded-xl border text-left transition-all duration-150

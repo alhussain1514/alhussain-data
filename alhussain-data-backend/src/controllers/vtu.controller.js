@@ -2,31 +2,25 @@ import Pricing from '../models/Pricing.js'
 import { debitWallet, resolveTransaction } from '../utils/walletEngine.js'
 import { vtuProvider } from '../utils/vtuProvider.js'
 
-// ───────────────────────── DATA ─────────────────────────
-
-// GET /api/vtu/data/plans/:network
 export const getDataPlans = async (req, res, next) => {
   try {
     const { network } = req.params
     const pricing = await Pricing.findOne()
     const plans = (pricing?.dataPlans || [])
       .filter((p) => p.network === network.toUpperCase() && p.active)
-      .map((p) => ({ id: p.id, name: p.name, duration: p.duration, price: p.sellingPrice, sellingPrice: p.sellingPrice, costPrice: p.costPrice, providerPlanId: p.providerPlanId }))
-
+      .map((p) => ({ id: p.id, name: p.name, duration: p.duration, price: p.sellingPrice, sellingPrice: p.sellingPrice, costPrice: p.costPrice, providerPlanId: p.providerPlanId, planType: p.planType }))
     res.json({ plans })
   } catch (err) {
     next(err)
   }
 }
 
-// POST /api/vtu/data/buy
 export const buyData = async (req, res, next) => {
   try {
     const { network, planId, phone } = req.body
     if (!network || !planId || !phone) {
       return res.status(400).json({ message: 'Network, plan, and phone number are required.' })
     }
-
     const pricing = await Pricing.findOne()
     const plan = pricing?.dataPlans.find((p) => p.id === planId && p.network === network.toUpperCase())
     if (!plan) return res.status(404).json({ message: 'Selected data plan was not found.' })
@@ -61,9 +55,6 @@ export const buyData = async (req, res, next) => {
   }
 }
 
-// ───────────────────────── AIRTIME ─────────────────────────
-
-// POST /api/vtu/airtime/buy
 export const buyAirtime = async (req, res, next) => {
   try {
     const { network, phone, amount } = req.body
@@ -98,12 +89,6 @@ export const buyAirtime = async (req, res, next) => {
   }
 }
 
-// ───────────────────────── ELECTRICITY ─────────────────────────
-
-// POST /api/vtu/electricity/verify
-// Demboss's API does not offer a meter pre-verification endpoint, so we
-// return an honest "not supported" response instead of a fabricated name —
-// the frontend prompts the customer to double-check their own meter number.
 export const verifyMeter = async (req, res, next) => {
   try {
     const { disco, meterType, meterNumber } = req.body
@@ -117,7 +102,6 @@ export const verifyMeter = async (req, res, next) => {
   }
 }
 
-// POST /api/vtu/electricity/pay
 export const payElectricity = async (req, res, next) => {
   try {
     const { disco, meterType, meterNumber, amount, customerName, customerPhone, customerAddress } = req.body
@@ -159,9 +143,6 @@ export const payElectricity = async (req, res, next) => {
   }
 }
 
-// ───────────────────────── TV ─────────────────────────
-
-// GET /api/vtu/tv/plans/:provider
 export const getTvPlans = async (req, res, next) => {
   try {
     const { provider } = req.params
@@ -169,15 +150,12 @@ export const getTvPlans = async (req, res, next) => {
     const plans = (pricing?.tvPlans || [])
       .filter((p) => p.provider === provider.toLowerCase() && p.active)
       .map((p) => ({ id: p.id, name: p.name, price: p.sellingPrice, sellingPrice: p.sellingPrice, costPrice: p.costPrice, providerPlanId: p.providerPlanId }))
-
     res.json({ plans })
   } catch (err) {
     next(err)
   }
 }
 
-// POST /api/vtu/tv/verify
-// See note on verifyMeter above — Demboss has no smartcard verification endpoint.
 export const verifyDecoder = async (req, res, next) => {
   try {
     const { provider, smartcard } = req.body
@@ -191,14 +169,12 @@ export const verifyDecoder = async (req, res, next) => {
   }
 }
 
-// POST /api/vtu/tv/pay
 export const payTV = async (req, res, next) => {
   try {
     const { provider, smartcard, planId } = req.body
     if (!provider || !smartcard || !planId) {
       return res.status(400).json({ message: 'Provider, smartcard number, and plan are required.' })
     }
-
     const pricing = await Pricing.findOne()
     const plan = pricing?.tvPlans.find((p) => p.id === planId && p.provider === provider.toLowerCase())
     if (!plan) return res.status(404).json({ message: 'Selected plan was not found.' })
@@ -233,9 +209,6 @@ export const payTV = async (req, res, next) => {
   }
 }
 
-// -------------------- RESULT CHECKER --------------------
-
-// GET /api/vtu/result-checker/prices
 export const getExamPinPrices = async (req, res, next) => {
   try {
     const pricing = await Pricing.findOne()
@@ -245,14 +218,13 @@ export const getExamPinPrices = async (req, res, next) => {
   }
 }
 
-// POST /api/vtu/result-checker/buy
 export const buyResultChecker = async (req, res, next) => {
   try {
     const { examName, quantity } = req.body
-    const validExams = ['WAEC', 'NECO', 'JAMB', 'NABTEB']
+    const validExams = ['WAEC', 'NECO', 'JAMB', 'NABTEB', 'WAECREGISTRATION', 'NBAIS']
 
     if (!examName || !validExams.includes(examName.toUpperCase())) {
-      return res.status(400).json({ message: 'Exam name must be WAEC, NECO, JAMB, or NABTEB.' })
+      return res.status(400).json({ message: 'Exam name must be WAEC, NECO, JAMB, NABTEB, WAECREGISTRATION, or NBAIS.' })
     }
     const qty = Number(quantity)
     if (!qty || qty < 1 || qty > 5) {

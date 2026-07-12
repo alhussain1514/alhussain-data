@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Wallet, ArrowRight, Shield } from 'lucide-react'
+import { Wallet, Shield, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { walletAPI } from '../utils/api'
 import { formatNaira } from '../utils/helpers'
 import { useAuth } from '../context/AuthContext'
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000]
+const ADMIN_WHATSAPP = import.meta.env.VITE_ADMIN_WHATSAPP || ''
 
 export default function FundWallet() {
   const { user, updateUser } = useAuth()
@@ -20,31 +21,33 @@ export default function FundWallet() {
     setLoading(true)
     try {
       const res = await walletAPI.initiateFunding(amt)
-      // Redirect to Paystack payment page
-      const { authorization_url, reference } = res.data
+      const { authorization_url } = res.data
       if (authorization_url) {
         window.location.href = authorization_url
       } else {
-        toast.error('Could not initiate payment')
+        toast.error('Could not start payment. Try again or use manual funding below.')
       }
     } catch (err) {
-      // Demo: simulate success
-      toast.success(`Wallet funded with ${formatNaira(amt)} (demo mode)`)
-      updateUser({ walletBalance: (user?.walletBalance || 0) + amt })
-      setAmount('')
+      toast.error(err.response?.data?.message || 'Could not start payment. Try again or use manual funding below.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const whatsappLink = () => {
+    const amt = parseFloat(amount)
+    const amountLine = amt > 0 ? `\nAmount: ${formatNaira(amt)}` : ''
+    const message = `Hello, I'd like to fund my wallet manually.\nName: ${user?.name || ''}\nPhone: ${user?.phone || ''}${amountLine}`
+    return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`
   }
 
   return (
     <div className="max-w-md space-y-6">
       <div>
         <h2 className="font-display text-2xl font-bold mb-1">Fund Wallet</h2>
-        <p className="text-slate-400 text-sm">Add money securely via Paystack</p>
+        <p className="text-slate-400 text-sm">Add money via Paystack or manual funding</p>
       </div>
 
-      {/* Current balance */}
       <div className="rounded-2xl p-6 relative overflow-hidden"
            style={{ background: 'linear-gradient(135deg, #1E3A8A, #312E81)' }}>
         <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-20"
@@ -54,7 +57,6 @@ export default function FundWallet() {
         <p className="text-xs text-white/40 mt-2">{user?.phone}</p>
       </div>
 
-      {/* Amount input */}
       <div>
         <label className="input-label">Amount to add (₦)</label>
         <div className="relative">
@@ -64,7 +66,6 @@ export default function FundWallet() {
             className="input-field pl-8 text-lg font-semibold" min="100" />
         </div>
 
-        {/* Quick amounts */}
         <div className="grid grid-cols-3 gap-2 mt-3">
           {QUICK_AMOUNTS.map((q) => (
             <button key={q} onClick={() => setAmount(String(q))}
@@ -78,7 +79,6 @@ export default function FundWallet() {
         </div>
       </div>
 
-      {/* New balance preview */}
       {amount && parseFloat(amount) >= 100 && (
         <div className="glass-card p-4 animate-slide-up">
           <div className="flex justify-between text-sm mb-2">
@@ -98,7 +98,39 @@ export default function FundWallet() {
         </div>
       )}
 
-      {/* Payment methods info */}
+      <button onClick={handleFund} disabled={loading || !amount || parseFloat(amount) < 100}
+        className="btn-primary w-full justify-center gap-2 py-3.5 text-base disabled:opacity-60">
+        {loading
+          ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Redirecting to Paystack…</span>
+          : <><Wallet size={17} />Fund {amount ? formatNaira(parseFloat(amount)) : 'Wallet'} via Paystack</>
+        }
+      </button>
+
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-white/10" />
+        <span className="text-xs text-slate-500 uppercase tracking-wider">or</span>
+        <div className="flex-1 h-px bg-white/10" />
+      </div>
+
+      <div className="glass-card p-5 space-y-3 border border-emerald-400/10">
+        <div className="flex items-center gap-2">
+          <MessageCircle size={18} className="text-emerald-400" />
+          <p className="font-display font-semibold text-white">Manual Funding</p>
+        </div>
+        <p className="text-xs text-slate-400">
+          Prefer to pay by bank transfer? Enter an amount above (optional), then message us on WhatsApp — we'll confirm your payment and credit your wallet manually.
+        </p>
+        {ADMIN_WHATSAPP ? (
+          <a href={whatsappLink()} target="_blank" rel="noopener noreferrer"
+            className="btn-primary w-full justify-center gap-2 py-3"
+            style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}>
+            <MessageCircle size={17} /> Contact Us on WhatsApp
+          </a>
+        ) : (
+          <p className="text-xs text-yellow-400">WhatsApp number not configured yet — contact the site owner.</p>
+        )}
+      </div>
+
       <div className="glass-card p-4">
         <p className="text-xs text-slate-400 uppercase tracking-wider mb-3 font-medium">Accepted payment methods</p>
         <div className="grid grid-cols-3 gap-2 text-center">
@@ -114,14 +146,6 @@ export default function FundWallet() {
           ))}
         </div>
       </div>
-
-      <button onClick={handleFund} disabled={loading || !amount || parseFloat(amount) < 100}
-        className="btn-primary w-full justify-center gap-2 py-3.5 text-base disabled:opacity-60">
-        {loading
-          ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Redirecting to Paystack…</span>
-          : <><Wallet size={17} />Fund {amount ? formatNaira(parseFloat(amount)) : 'Wallet'} via Paystack</>
-        }
-      </button>
 
       <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
         <Shield size={12} />
