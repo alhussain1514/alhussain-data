@@ -67,6 +67,7 @@ userSchema.methods.comparePassword = function (candidate) {
 userSchema.methods.toPublicJSON = function () {
   return {
     id: this._id,
+    _id: this._id,
     name: this.name,
     phone: this.phone,
     email: this.email,

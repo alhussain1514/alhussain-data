@@ -16,11 +16,13 @@ if (!API_TOKEN) {
   console.warn('⚠️  DEMBOSS_API_TOKEN is not set. All VTU purchases will fail until it is configured in .env')
 }
 
+const AUTH_SCHEME = process.env.DEMBOSS_AUTH_SCHEME || 'Token'
+
 const dembossClient = axios.create({
   baseURL: BASE_URL,
   timeout: 25000,
   headers: {
-    Authorization: `Token ${API_TOKEN}`,
+    Authorization: `${AUTH_SCHEME} ${API_TOKEN}`,
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
