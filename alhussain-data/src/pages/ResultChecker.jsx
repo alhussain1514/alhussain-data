@@ -5,6 +5,11 @@ import { vtuAPI } from '../utils/api'
 import { formatNaira } from '../utils/helpers'
 import { useAuth } from '../context/AuthContext'
 
+const EXAM_LABELS = {
+  WAECREGISTRATION: 'WAEC Reg.',
+  NBAIS: 'NBAIS',
+}
+
 export default function ResultChecker() {
   const { user, updateUser } = useAuth()
   const [exams, setExams] = useState([])
@@ -138,17 +143,17 @@ export default function ResultChecker() {
       <div>
         <label className="input-label">Select Exam</label>
         {loadingExams ? (
-          <div className="grid grid-cols-4 gap-2">{[1, 2, 3, 4].map((i) => <div key={i} className="h-20 glass-card animate-pulse rounded-xl" />)}</div>
+          <div className="grid grid-cols-3 gap-2">{[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="h-20 glass-card animate-pulse rounded-xl" />)}</div>
         ) : exams.length === 0 ? (
           <div className="glass-card p-4 text-slate-400 text-sm text-center">No exam pin pricing configured yet.</div>
         ) : (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {exams.map((exam) => (
               <button key={exam.examName}
                 onClick={() => setSelectedExam(exam)}
-                className={`p-4 rounded-xl border text-center transition-all ${selectedExam?.examName === exam.examName ? 'border-brand-blue/50 bg-brand-blue/10' : 'glass-card hover:border-white/20'}`}>
-                <GraduationCap size={20} className={`mx-auto mb-2 ${selectedExam?.examName === exam.examName ? 'text-brand-cyan' : 'text-slate-400'}`} />
-                <p className="font-display font-bold text-white text-sm">{exam.examName}</p>
+                className={`p-3 rounded-xl border text-center transition-all ${selectedExam?.examName === exam.examName ? 'border-brand-blue/50 bg-brand-blue/10' : 'glass-card hover:border-white/20'}`}>
+                <GraduationCap size={18} className={`mx-auto mb-1.5 ${selectedExam?.examName === exam.examName ? 'text-brand-cyan' : 'text-slate-400'}`} />
+                <p className="font-display font-bold text-white text-xs leading-tight">{EXAM_LABELS[exam.examName] || exam.examName}</p>
                 <p className="text-xs text-slate-400 mt-1">{formatNaira(exam.sellingPrice)}</p>
               </button>
             ))}

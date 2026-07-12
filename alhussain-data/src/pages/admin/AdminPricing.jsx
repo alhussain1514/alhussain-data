@@ -8,7 +8,7 @@ const NETWORKS = ['MTN', 'GLO', 'AIRTEL', '9MOBILE']
 const TV_PROVIDERS = ['dstv', 'gotv', 'startimes', 'showmax']
 
 export default function AdminPricing() {
-  const [tab, setTab] = useState('data') // 'data' | 'tv' | 'exam'
+  const [tab, setTab] = useState('data')
   const [dataPlans, setDataPlans] = useState([])
   const [tvPlans, setTvPlans] = useState([])
   const [examPrices, setExamPrices] = useState([])
@@ -293,7 +293,7 @@ export default function AdminPricing() {
             </table>
           )}
           <div className="p-4 border-t border-white/[0.06] text-xs text-slate-400">
-            ⚠️ JAMB's price was seeded as a placeholder — Demboss's docs don't list an official JAMB pin price. Confirm the real price with Demboss and update it here before enabling JAMB purchases.
+            ⚠️ JAMB, WAEC Registration, and NBAIS prices were seeded as placeholders — confirm the real Demboss prices for these and update them here before enabling those purchases.
           </div>
         </div>
       )}

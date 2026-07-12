@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, X, RefreshCw } from 'lucide-react'
+import { Search, RefreshCw, X } from 'lucide-react'
 import { adminAPI } from '../../utils/api'
 import { formatNaira, formatDateShort, txStatusColor, txStatusLabel, TX_TYPES } from '../../utils/helpers'
 
@@ -58,9 +58,12 @@ export default function AdminTransactions() {
   }
 
   return (
-    <div className="space-y-5 max-w-6xl">
-      <div className="flex items-center justify-between">
-        <div><h2 className="font-display text-2xl font-bold">Transactions</h2><p className="text-slate-400 text-sm">{total.toLocaleString()} total — Revenue this page: <span className="text-emerald-400 font-semibold">{formatNaira(totalRevenue)}</span></p></div>
+    <div className="space-y-5 max-w-5xl">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="font-display text-2xl font-bold">Transactions</h2>
+          <p className="text-slate-400 text-sm">{total.toLocaleString()} total · Page revenue: {formatNaira(totalRevenue)}</p>
+        </div>
         <button onClick={load} className="btn-ghost gap-2 text-sm"><RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Refresh</button>
         <button onClick={exportCSV} className="btn-ghost gap-2 text-sm ml-2">⬇ Export CSV</button>
       </div>
@@ -70,54 +73,56 @@ export default function AdminTransactions() {
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input type="text" placeholder="Search reference or description, press Enter..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field pl-10 w-full" />
         </div>
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }} className="input-field w-36">
-          <option value="">All Status</option>
+        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }} className="input-field">
+          <option value="">All Statuses</option>
           <option value="success">Success</option>
-          <option value="failed">Failed</option>
           <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
         </select>
-        <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1) }} className="input-field w-40">
+        <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1) }} className="input-field">
           <option value="">All Types</option>
           <option value="data">Data</option>
           <option value="airtime">Airtime</option>
           <option value="electricity">Electricity</option>
           <option value="tv">TV</option>
-          <option value="wallet_fund">Wallet Fund</option>
           <option value="result_checker">Result Checker</option>
+          <option value="wallet_fund">Wallet Funding</option>
         </select>
         {(statusFilter || typeFilter) && <button type="button" onClick={() => { setStatusFilter(''); setTypeFilter(''); setSearch(''); setPage(1) }} className="btn-ghost text-xs gap-1"><X size={12} /> Clear</button>}
       </form>
 
       <div className="glass-card overflow-hidden">
-        {loading ? <div className="p-8 text-center text-slate-400 text-sm">Loading transactions...</div> : filtered.length === 0 ? <div className="p-8 text-center text-slate-400 text-sm">No transactions found.</div> : (
+        {loading ? (
+          <div className="p-8 text-center text-slate-400 text-sm">Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 text-sm">No transactions found.</div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs text-slate-500 uppercase tracking-wider border-b border-white/[0.06] bg-white/[0.02]">
-                <th className="px-4 py-3 font-medium">User</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Description</th>
-                <th className="px-4 py-3 font-medium">Amount</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Receipt</th>
-              </tr></thead>
+              <thead>
+                <tr className="text-left text-xs text-slate-500 uppercase tracking-wider border-b border-white/[0.06] bg-white/[0.02]">
+                  <th className="px-5 py-3 font-medium">Customer</th>
+                  <th className="px-5 py-3 font-medium">Type</th>
+                  <th className="px-5 py-3 font-medium">Description</th>
+                  <th className="px-5 py-3 font-medium">Amount</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Date</th>
+                </tr>
+              </thead>
               <tbody>
                 {filtered.map((tx) => {
                   const t = TX_TYPES[tx.type] || { icon: '📦', label: tx.type }
                   return (
-                    <tr key={tx._id} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02]">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-brand-blue/15 flex items-center justify-center text-xs font-bold text-brand-blue flex-shrink-0">{tx.user?.name?.[0]?.toUpperCase() || '?'}</div>
-                          <div><p className="text-white text-xs font-medium">{tx.user?.name || 'Unknown'}</p><p className="text-xs text-slate-500">{tx.user?.phone}</p></div>
-                        </div>
+                    <tr key={tx._id} onClick={() => setSelected(tx)} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] cursor-pointer">
+                      <td className="px-5 py-3">
+                        <p className="text-white font-medium">{tx.user?.name || 'Unknown'}</p>
+                        <p className="text-xs text-slate-500">{tx.user?.phone}</p>
                       </td>
-                      <td className="px-4 py-3 text-slate-300 text-xs">{t.icon} {t.label}</td>
-                      <td className="px-4 py-3 text-slate-400 text-xs max-w-32 truncate">{tx.description || '-'}</td>
-                      <td className="px-4 py-3 font-bold text-white">{formatNaira(tx.amount)}</td>
-                      <td className="px-4 py-3"><span className={'text-xs px-2 py-0.5 rounded-md font-medium ' + txStatusColor(tx.status)}>{txStatusLabel(tx.status)}</span></td>
-                      <td className="px-4 py-3 text-slate-500 text-xs">{formatDateShort(tx.createdAt)}</td>
-                      <td className="px-4 py-3"><button onClick={() => setSelected(tx)} className="text-xs text-brand-blue hover:text-brand-cyan transition-colors">View</button></td>
+                      <td className="px-5 py-3 text-slate-300 text-xs">{t.icon} {t.label}</td>
+                      <td className="px-5 py-3 text-slate-400 text-xs max-w-48 truncate">{tx.description}</td>
+                      <td className="px-5 py-3 font-medium text-white">{formatNaira(tx.amount)}</td>
+                      <td className="px-5 py-3"><span className={'text-xs px-2 py-0.5 rounded-md font-medium ' + txStatusColor(tx.status)}>{txStatusLabel(tx.status)}</span></td>
+                      <td className="px-5 py-3 text-slate-500 text-xs">{formatDateShort(tx.createdAt)}</td>
                     </tr>
                   )
                 })}
@@ -125,40 +130,39 @@ export default function AdminTransactions() {
             </table>
           </div>
         )}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-white/[0.06]">
-            <button onClick={() => setPage((p) => Math.max(1,p-1))} disabled={page===1} className="btn-ghost text-xs disabled:opacity-40">Previous</button>
-            <span className="text-xs text-slate-400">Page {page} of {totalPages}</span>
-            <button onClick={() => setPage((p) => Math.min(totalPages,p+1))} disabled={page===totalPages} className="btn-ghost text-xs disabled:opacity-40">Next</button>
-          </div>
-        )}
       </div>
 
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="btn-ghost text-sm disabled:opacity-40">Prev</button>
+          <span className="text-sm text-slate-400 px-3">Page {page} of {totalPages}</span>
+          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn-ghost text-sm disabled:opacity-40">Next</button>
+        </div>
+      )}
+
       {selected && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setSelected(null)}>
-          <div className="glass-card p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display font-semibold">Full Receipt</h3>
-              <button onClick={() => setSelected(null)} className="text-slate-500 hover:text-white"><X size={18} /></button>
-            </div>
-            <div className="text-center mb-4 pb-4 border-b border-white/10">
-              <p className="font-display font-bold text-base">AL-HUSSAIN <span className="text-brand-cyan">DATA</span></p>
-              <p className="text-xs text-slate-400 mt-1">Admin Transaction Receipt</p>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={() => setSelected(null)}>
+          <div className="glass-card p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display font-bold text-lg">Transaction Detail</h3>
+              <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
             </div>
             <div className="space-y-3 mb-4">
               {[
-                ['Customer', selected.user?.name || 'Unknown'],
-                ['Phone', selected.user?.phone || '-'],
-                ['Reference', selected.reference || selected._id],
-                ['Type', (selected.type || '').replace(/_/g,' ')],
-                ['Description', selected.description || '-'],
+                ['Reference', selected.reference],
+                ['Customer', selected.user?.name],
+                ['Phone', selected.user?.phone],
+                ['Type', TX_TYPES[selected.type]?.label || selected.type],
+                ['Description', selected.description],
                 ['Amount', formatNaira(selected.amount)],
-                ['Status', selected.status],
-                ['Date', new Date(selected.createdAt).toLocaleString('en-NG', {dateStyle:'medium',timeStyle:'short'})],
-              ].map(([k,v]) => (
+                ['Balance Before', formatNaira(selected.balanceBefore)],
+                ['Balance After', formatNaira(selected.balanceAfter)],
+                ['Status', txStatusLabel(selected.status)],
+                ['Date', new Date(selected.createdAt).toLocaleString()],
+              ].map(([k, v]) => (
                 <div key={k} className="flex justify-between text-sm">
                   <span className="text-slate-400">{k}</span>
-                  <span className="text-white font-medium text-right max-w-52 break-all">{v}</span>
+                  <span className="text-white font-medium text-right max-w-56 truncate">{v}</span>
                 </div>
               ))}
             </div>
@@ -173,7 +177,12 @@ export default function AdminTransactions() {
                 ))}
               </div>
             )}
-            <button onClick={() => window.print()} className="btn-ghost w-full justify-center mt-4 text-sm">🖨️ Print Receipt</button>
+            {selected.providerResponse && !selected.providerResponse?.pins && (
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Demboss Response {selected.status === 'failed' ? '(why it failed)' : ''}</p>
+                <pre className="bg-white/5 rounded-lg p-3 text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap break-words">{JSON.stringify(selected.providerResponse, null, 2)}</pre>
+              </div>
+            )}
           </div>
         </div>
       )}
